@@ -30,6 +30,10 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.musical_flag = False
         self.animal_flag = False
         self.ecg_flag = False
+        self.previous_selection = None
+        self.handel_buttons()
+        self.comboBox.setCurrentText("Unifrom Range")
+        self.defult_window()
 
 
     def select_mode(self):
@@ -58,6 +62,74 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.animal_flag = False
             self.unifrom_flag = False
             self.num_sliders = 4
+    def handel_buttons(self):
+        self.comboBox.currentIndexChanged.connect(self.handle_combobox)
+
+    def hideElements(self, elements):
+        for element in elements:
+            element.hide()
+
+    def showElements(self, elements):
+        for element in elements:
+            element.show()
+
+
+
+    def defult_window(self):
+        if self.comboBox.currentText() == "Unifrom Range":
+            self.showElements([self.verticalSlider, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4, self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7, self.verticalSlider_8, self.verticalSlider_9, self.verticalSlider_10 , self.label, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6, self.label_7, self.label_8, self.label_9, self.label_10
+                               ])
+            self.label.setText("1")
+            self.label_2.setText("2")
+            self.label_3.setText("3")
+            self.label_4.setText("4")
+            self.label_5.setText("5")
+            self.label_6.setText("6")
+            self.label_7.setText("7")
+            self.label_8.setText("8")
+            self.label_9.setText("9")
+            self.label_10.setText("10")
+
+    def handle_combobox(self):
+        selected_mode = self.comboBox.currentText()
+        if selected_mode =="Musical Instruments":
+            self.hideElements([self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7, self.verticalSlider_8, self.verticalSlider_9, self.verticalSlider_10
+                               ,self.label_5, self.label_6, self.label_7, self.label_8, self.label_9, self.label_10])
+
+            self.showElements([self.verticalSlider, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4, self.label, self.label_2, self.label_3, self.label_4])
+            self.label.setText("Piano")
+            self.label_2.setText("Guitar")
+            self.label_3.setText("Violin")
+            self.label_4.setText("Trumpet")
+        elif selected_mode =="Animal Sounds":
+            self.hideElements([self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7, self.verticalSlider_8, self.verticalSlider_9, self.verticalSlider_10,
+                               self.label_5, self.label_6, self.label_7, self.label_8, self.label_9, self.label_10])
+            self.showElements([self.verticalSlider, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4 , self.label, self.label_2, self.label_3, self.label_4])
+            self.label.setText("Lion")
+            self.label_2.setText("Monkey")
+            self.label_3.setText("Bird")
+            self.label_4.setText("Elephant")
+        elif selected_mode =="ECG Abnormalities":
+            self.hideElements([self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7, self.verticalSlider_8, self.verticalSlider_9, self.verticalSlider_10, self.label_5, self.label_6, self.label_7, self.label_8, self.label_9, self.label_10])
+
+            self.showElements([self.verticalSlider, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4 , self.label, self.label_2, self.label_3, self.label_4])
+            self.label.setText("PVC")
+            self.label_2.setText("PAC")
+            self.label_3.setText("LBBB")
+            self.label_4.setText("RBBB")
+        elif selected_mode =="Unifrom Range":
+            self.showElements([self.verticalSlider, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4, self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7, self.verticalSlider_8, self.verticalSlider_9, self.verticalSlider_10 , self.label, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6, self.label_7, self.label_8, self.label_9, self.label_10
+                               ])
+            self.label.setText("1")
+            self.label_2.setText("2")
+            self.label_3.setText("3")
+            self.label_4.setText("4")
+            self.label_5.setText("5")
+            self.label_6.setText("6")
+            self.label_7.setText("7")
+            self.label_8.setText("8")
+            self.label_9.setText("9")
+            self.label_10.setText("10")
 
 
 
