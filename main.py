@@ -25,6 +25,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         super(MainApp, self).__init__(parent)
         self.setupUi(self)
         self.modes_list = ['Unifrom Range', 'Musical Instruments', 'Animal Sounds', 'ECG Abnormalities']
+        self.sliders_labels = []
         self.uniform_flag = True
         self.musical_flag = False
         self.animal_flag = False
@@ -35,12 +36,29 @@ class MainApp(QMainWindow, FORM_CLASS):
         selected_mode = self.modes_comboBox.currentText()
         if selected_mode == 'Unifrom Range' : 
             self.unifrom_flag = True
+            self.musical_flag = False
+            self.animal_flag = False
+            self.ecg_flag = False
+            self.num_sliders = 10
         elif selected_mode == 'Musical Instruments' : 
             self.musical_flag = True
+            self.unifrom_flag = False
+            self.animal_flag = False
+            self.ecg_flag = False
+            self.num_sliders = 4
         elif selected_mode == 'Animal Sounds' : 
             self.animal_flag = True
+            self.musical_flag = False
+            self.unifrom_flag = False
+            self.ecg_flag = False
+            self.num_sliders = 4
         elif selected_mode == 'ECG Abnormalities' :
             self.ecg_flag = True
+            self.musical_flag = False
+            self.animal_flag = False
+            self.unifrom_flag = False
+            self.num_sliders = 4
+
 
 
 def main():  # method to start app
