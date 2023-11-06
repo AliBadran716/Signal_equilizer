@@ -13,6 +13,7 @@ from os import path
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "main.ui"))
 
 
+
 class MainApp(QMainWindow, FORM_CLASS):
     def __init__(self, parent=None):
         """
@@ -23,13 +24,32 @@ class MainApp(QMainWindow, FORM_CLASS):
         """
         super(MainApp, self).__init__(parent)
         self.setupUi(self)
+        self.modes_list = ['Unifrom Range', 'Musical Instruments', 'Animal Sounds', 'ECG Abnormalities']
+        self.uniform_flag = True
+        self.musical_flag = False
+        self.animal_flag = False
+        self.ecg_flag = False
+
+
+    def select_mode(self):
+        selected_mode = self.modes_comboBox.currentText()
+        if selected_mode == 'Unifrom Range' : 
+            self.unifrom_flag = True
+        elif selected_mode == 'Musical Instruments' : 
+            self.musical_flag = True
+        elif selected_mode == 'Animal Sounds' : 
+            self.animal_flag = True
+        elif selected_mode == 'ECG Abnormalities' :
+            self.ecg_flag = True
 
 
 def main():  # method to start app
-    app = QApplication(sys.argv)
-    window = MainApp()
-    window.show()
-    app.exec_()  # infinite Loop
+        app = QApplication(sys.argv)
+        window = MainApp()
+        window.show()
+        app.exec_()  # infinite Loop
+
+   
 
 
 if __name__ == '__main__':

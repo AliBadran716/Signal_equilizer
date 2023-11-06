@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1495</width>
-    <height>905</height>
+    <width>1440</width>
+    <height>749</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>11</x>
@@ -27,7 +27,33 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QComboBox" name="comboBox"/>
+        <widget class="QComboBox" name="modes_comboBox">
+         <item>
+          <property name="text">
+           <string>Selcet Mode</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Unifrom Range</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Musical Instruments</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Animal Sounds</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>ECG Abnormalities</string>
+          </property>
+         </item>
+        </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
@@ -273,8 +299,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1495</width>
-     <height>21</height>
+     <width>1440</width>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
