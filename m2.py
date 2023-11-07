@@ -33,7 +33,7 @@ class MainApp(QDialog, FORM_CLASS):
         self.gaussian = False
         self.handle_button()
         # Generating a uniformly distributed signal with 100 data points between 0 and 10
-        self.signal = self.generate_signal()
+        self.signal = self.generate_signal(num_frequencies=100, duration=1, num_points=200)
         self.visualize_window()
 
     def handle_button(self):
@@ -41,32 +41,12 @@ class MainApp(QDialog, FORM_CLASS):
         self.parameter_slider.valueChanged.connect(self.visualize_window)
 
     def visualize_window(self):
-
-        freqs, amps = self.get_frequency_amplitude()
-        freq_range, amp_range, sti, eni = self.get_amplitudes_in_range( freqs, amps, 20, 40)
-
         selected_window = self.window_comboBox.currentText()
-        scale_factor = self.parameter_slider.value()/50
 
-        if selected_window == "Hamming":
-            window = self.hamming_window(len(freq_range))
-            window_title = "Hamming Window Function"
-        elif selected_window == "Hanning":
-            window = self.hanning_window(len(freq_range))
-            window_title = "Hanning Window Function"
-        elif selected_window == "Gaussian":
-            window = self.gaussian_window(len(freq_range))
-            window_title = "Gaussian Window Function"
-        elif selected_window == "Rectangle":
-            window = self.rectangular_window(len(freq_range))
-            window_title = "Rectangular Window Function"
-
-
-        amps[sti:eni + 1] = amp_range * window * scale_factor
-        windowed_signal = amps
+        amps, freqs, modified_signal_time, window_title = self.apply_window_to_frequency_range(self.signal, 20, 40, selected_window)
 
         plt.clf()
-        plt.plot(freqs, windowed_signal)
+        plt.plot(freqs, amps)
         plt.title(window_title)
         plt.xlabel("Frequency (Hz)")
         plt.ylabel("Amplitude")
@@ -79,7 +59,7 @@ class MainApp(QDialog, FORM_CLASS):
         scene.addPixmap(QPixmap.fromImage(canvas.grab().toImage()))
         self.graphicsView.setScene(scene)
 
-        modified_signal_time = np.fft.ifft(np.concatenate((windowed_signal, np.flip(windowed_signal))))
+
         plt.clf()
         plt.plot(modified_signal_time.real)  # Plot the real part of the signal
         plt.title("Modified Signal in Time Domain")
@@ -94,10 +74,34 @@ class MainApp(QDialog, FORM_CLASS):
         scene.addPixmap(QPixmap.fromImage(canvas.grab().toImage()))
         self.graphicsView2.setScene(scene)
 
-    # def parameter_slider_value_changed(self, value):
-    #     self.slider_value = value
-    #     self.visualize_window()
+    # Function to apply a window to a specific frequency range
+    def apply_window_to_frequency_range(self, signal, start_freq, end_freq, selected_window):
+        scale_factor = self.parameter_slider.value() / 50
+        freqs, amps = self.get_frequency_amplitude(signal)
 
+
+        # Find indices corresponding to start and end frequencies
+        start_index = np.where(freqs >= start_freq)[0][0]
+        end_index = np.where(freqs <= end_freq)[0][-1]
+
+        # Apply the window function to the specific frequency range in the time domain
+        if selected_window == "Hamming":
+            window = self.hamming_window(end_index - start_index + 1)
+            window_title = "Hamming Window Function"
+        elif selected_window == "Hanning":
+            window = self.hanning_window(end_index - start_index + 1)
+            window_title = "Hanning Window Function"
+        elif selected_window == "Gaussian":
+            window = self.gaussian_window(end_index - start_index + 1)
+            window_title = "Gaussian Window Function"
+        elif selected_window == "Rectangle":
+            window = self.rectangular_window(end_index - start_index + 1)
+            window_title = "Rectangular Window Function"
+
+        amps[start_index:end_index + 1] *= window * scale_factor
+        modified_signal_time = np.fft.ifft(np.concatenate((amps, np.flip(amps))))
+
+        return amps, freqs, modified_signal_time, window_title
 
     def select_window(self):
         selected_mode = self.window_comboBox.currentText()
@@ -162,15 +166,15 @@ class MainApp(QDialog, FORM_CLASS):
             window = np.resize(window, len(signal))
         return window
 
-    def generate_signal(self):
-        # Generating a signal with three frequencies
-        t = np.linspace(0, 1, 200, endpoint=False)  # Time points
-        freq1 = 10  # Frequency 1
-        freq2 = 30  # Frequency 2
-        freq3 = 50  # Frequency 3
-        signal = np.sin(2 * np.pi * freq1 * t) + 0.5 * np.sin(2 * np.pi * freq2 * t) + 0.2 * np.sin(
-            2 * np.pi * freq3 * t)
+    def generate_signal(self, num_frequencies=5, duration=1, num_points=200):
+        # Generating a signal with multiple frequencies
+        t = np.linspace(0, duration, num_points, endpoint=False)  # Time points
+        frequencies = np.random.uniform(1, 100, num_frequencies)  # Generate random frequencies
+        amplitudes = np.random.rand(num_frequencies)  # Random amplitudes for each frequency
+
+        signal = np.sum([amp * np.sin(2 * np.pi * freq * t) for freq, amp in zip(frequencies, amplitudes)], axis=0)
         return signal
+
 
     def get_amplitudes_in_range(self, freqs, amplitudes, start_freq, end_freq):
         # Find the indices corresponding to start and end frequencies
@@ -183,11 +187,11 @@ class MainApp(QDialog, FORM_CLASS):
 
         return freqs_in_range, amplitudes_in_range,start_index ,end_index
 
-    def get_frequency_amplitude(self):
-        N = len(self.signal)
+    def get_frequency_amplitude(self,sig):
+        N = len(sig)
         T = 1 / 200  # Sample spacing (assuming 1000 samples)
         freqs = np.fft.fftfreq(N, T)[:N // 2]  # Get the frequencies
-        fft_vals = np.fft.fft(self.signal)  # Compute FFT
+        fft_vals = np.fft.fft(sig)  # Compute FFT
         fft_vals = 2.0 / N * np.abs(fft_vals[0:N // 2])  # Get amplitude
 
         return freqs, fft_vals
