@@ -4,7 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.uic import loadUiType
 from PyQt5.QtWidgets import QApplication, QFileDialog
 import pandas as pd
-# import pyqtgraph as pg
+import pyqtgraph as pg
 import sys
 import numpy as np
 from os import path
@@ -26,7 +26,7 @@ class MainApp(QDialog, FORM_CLASS):
         """
         super(MainApp, self).__init__(parent)
         self.setupUi(self)
-        self.setFixedSize(750, 600)
+        # self.setFixedSize(750, 600)
         self.rectangle = True
         self.hamming = False
         self.hanning = False
@@ -41,34 +41,31 @@ class MainApp(QDialog, FORM_CLASS):
         self.parameter_slider.valueChanged.connect(self.visualize_window)
 
     def visualize_window(self):
-        plt.clf()
+
         freqs, amps = self.get_frequency_amplitude()
         freq_range, amp_range, sti, eni = self.get_amplitudes_in_range( freqs, amps, 20, 40)
 
         selected_window = self.window_comboBox.currentText()
-        window_size = self.parameter_slider.value()
+        scale_factor = self.parameter_slider.value()/50
 
         if selected_window == "Hamming":
-            window = self.hamming_window(window_size)
+            window = self.hamming_window(len(freq_range))
             window_title = "Hamming Window Function"
         elif selected_window == "Hanning":
-            window = self.hanning_window(window_size)
+            window = self.hanning_window(len(freq_range))
             window_title = "Hanning Window Function"
         elif selected_window == "Gaussian":
-            window = self.gaussian_window(window_size)
+            window = self.gaussian_window(len(freq_range))
             window_title = "Gaussian Window Function"
         elif selected_window == "Rectangle":
-            window = self.rectangular_window(window_size)
+            window = self.rectangular_window(len(freq_range))
             window_title = "Rectangular Window Function"
 
-        if window_size:
-            window = self.adjust_window_size(window, amp_range)
 
-            amps[sti:eni + 1] = amp_range * window
-            windowed_signal = amps
-        else:
-            windowed_signal = amps
+        amps[sti:eni + 1] = amp_range * window * scale_factor
+        windowed_signal = amps
 
+        plt.clf()
         plt.plot(freqs, windowed_signal)
         plt.title(window_title)
         plt.xlabel("Frequency (Hz)")
@@ -81,6 +78,21 @@ class MainApp(QDialog, FORM_CLASS):
         scene = QGraphicsScene()
         scene.addPixmap(QPixmap.fromImage(canvas.grab().toImage()))
         self.graphicsView.setScene(scene)
+
+        modified_signal_time = np.fft.ifft(np.concatenate((windowed_signal, np.flip(windowed_signal))))
+        plt.clf()
+        plt.plot(modified_signal_time.real)  # Plot the real part of the signal
+        plt.title("Modified Signal in Time Domain")
+        plt.xlabel("Time")
+        plt.ylabel("Amplitude")
+        plt.grid()
+
+        canvas = FigureCanvas(plt.gcf())
+        canvas.draw()
+
+        scene = QGraphicsScene()
+        scene.addPixmap(QPixmap.fromImage(canvas.grab().toImage()))
+        self.graphicsView2.setScene(scene)
 
     # def parameter_slider_value_changed(self, value):
     #     self.slider_value = value

@@ -4,7 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.uic import loadUiType
 from PyQt5.QtWidgets import QApplication, QFileDialog
 import pandas as pd
-# import pyqtgraph as pg
+import pyqtgraph as pg
 import sys
 import numpy as np
 from os import path
