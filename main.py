@@ -131,6 +131,33 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.label_9.setText("9")
             self.label_10.setText("10")
 
+    def read_wav(self):
+        self.samplerate, data = wavfile.read('eleph.wav')
+        if data.ndim == 2:
+            self.data = data.mean(axis=1)
+        else:
+            self.data = data
+        self.time_a = np.arange(0, len(self.data)) / self.samplerate
+        imageView = ImageView()
+
+# Compute spectrogram and set image
+#
+
+        # colors = [(0, 0, 255, 255), (255, 255, 255, 255), (255, 0, 0, 255)]
+        # img = pg.ImageItem(image = Sxx , lut = colors)
+        # self.graphicsView_3.addItem(img)
+        self.graphicsView.plot(self.time_a,self.data, pen='r')
+                    # Compute the spectrogram for the audio
+        
+
+            
+    def DFT(self):
+        transformed = fft(self.data)
+        N = len(self.data)
+        xf = np.linspace(0.0, 0.5*self.samplerate, N//2) 
+        
+        self.graphicsView_2.plot(xf, 2.0/N * np.abs(transformed[:N//2]), pen='r')
+
 
 
 def main():  # method to start app
