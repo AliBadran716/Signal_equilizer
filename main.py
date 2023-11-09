@@ -27,65 +27,30 @@ class MainApp(QMainWindow, FORM_CLASS):
         """
         super(MainApp, self).__init__(parent)
         self.setupUi(self)
-        self.modes_list = {
-            'Unifrom Range': [[self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4,
+        self.modes_dict = {
+            'Unifrom Range': [10, [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4,
                                self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7,
                                self.verticalSlider_8, self.verticalSlider_9, self.verticalSlider_10],
-                              [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
-                               self.label_7, self.label_8, self.label_9, self.label_10
-                               ],
                               ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], True],
-            'Musical Instruments': [
+            'Musical Instruments': [4,
                                 [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4],
-                                [self.label_1, self.label_2, self.label_3, self.label_4],
                                 ["Piano", "Guitar", "Violin", "Trumpet"], False],
-            'Animal Sounds': [
+            'Animal Sounds': [4,
                 [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4],
-                [self.label_1, self.label_2, self.label_3, self.label_4],
                 ["Lion", "Monkey", "Bird", "Elephant"], False],
-            'ECG Abnormalities': [
+            'ECG Abnormalities': [4,
                 [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4],
-                [self.label_1, self.label_2, self.label_3, self.label_4],
                 ["PVC", "PAC", "LBBB", "RBBB"], False]
         }
-        self.sliders_labels = []
-        self.uniform_flag = True
-        self.musical_flag = False
-        self.animal_flag = False
-        self.ecg_flag = False
+        self.sliders_labels = [self.label_1,self.label_2,self.label_3,self.label_4,self.label_5,self.label_6,self.label_7,self.label_8,self.label_9,self.label_10]
         self.previous_selection = None
         self.handel_buttons()
-        self.comboBox.setCurrentText("Unifrom Range")
+        #self.comboBox.setCurrentText("Unifrom Range")
 
-    def select_mode(self):
-        selected_mode = self.modes_comboBox.currentText()
-        if selected_mode == 'Unifrom Range':
-            self.unifrom_flag = True
-            self.musical_flag = False
-            self.animal_flag = False
-            self.ecg_flag = False
-            self.num_sliders = 10
-        elif selected_mode == 'Musical Instruments':
-            self.musical_flag = True
-            self.unifrom_flag = False
-            self.animal_flag = False
-            self.ecg_flag = False
-            self.num_sliders = 4
-        elif selected_mode == 'Animal Sounds':
-            self.animal_flag = True
-            self.musical_flag = False
-            self.unifrom_flag = False
-            self.ecg_flag = False
-            self.num_sliders = 4
-        elif selected_mode == 'ECG Abnormalities':
-            self.ecg_flag = True
-            self.musical_flag = False
-            self.animal_flag = False
-            self.unifrom_flag = False
-            self.num_sliders = 4
+            
 
     def handel_buttons(self):
-        self.comboBox.currentIndexChanged.connect(self.handle_combobox)
+        self.comboBox.currentIndexChanged.connect(self.handle_sliders)
 
     def showElements(self, elements, show=True):
         for element in elements:
@@ -94,63 +59,18 @@ class MainApp(QMainWindow, FORM_CLASS):
             else:
                 element.hide()
 
-    def handle_combobox(self):
+    def handle_sliders(self, mode_name):
         selected_mode = self.comboBox.currentText()
-        if selected_mode == "Musical Instruments":
-            self.showElements(
-                [self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7, self.verticalSlider_8,
-                 self.verticalSlider_9, self.verticalSlider_10
-                    , self.label_5, self.label_6, self.label_7, self.label_8, self.label_9, self.label_10], False)
-
-            self.showElements(
-                [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4, self.label_1,
-                 self.label_2, self.label_3, self.label_4])
-            self.label_1.setText("Piano")
-            self.label_2.setText("Guitar")
-            self.label_3.setText("Violin")
-            self.label_4.setText("Trumpet")
-        elif selected_mode == "Animal Sounds":
-            self.showElements(
-                [self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7, self.verticalSlider_8,
-                 self.verticalSlider_9, self.verticalSlider_10,
-                 self.label_5, self.label_6, self.label_7, self.label_8, self.label_9, self.label_10], False)
-            self.showElements(
-                [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4, self.label_1,
-                 self.label_2, self.label_3, self.label_4])
-            self.label_1.setText("Lion")
-            self.label_2.setText("Monkey")
-            self.label_3.setText("Bird")
-            self.label_4.setText("Elephant")
-        elif selected_mode == "ECG Abnormalities":
-            self.showElements(
-                [self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7, self.verticalSlider_8,
-                 self.verticalSlider_9, self.verticalSlider_10, self.label_5, self.label_6, self.label_7, self.label_8,
-                 self.label_9, self.label_10], False)
-
-            self.showElements(
-                [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4, self.label_1,
-                 self.label_2, self.label_3, self.label_4])
-            self.label_1.setText("PVC")
-            self.label_2.setText("PAC")
-            self.label_3.setText("LBBB")
-            self.label_4.setText("RBBB")
-        elif selected_mode == "Unifrom Range":
-            self.showElements([self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3, self.verticalSlider_4,
-                               self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7,
-                               self.verticalSlider_8, self.verticalSlider_9, self.verticalSlider_10, self.label_1,
-                               self.label_2, self.label_3, self.label_4, self.label_5, self.label_6, self.label_7,
-                               self.label_8, self.label_9, self.label_10
-                               ])
-            self.label_1.setText("1")
-            self.label_2.setText("2")
-            self.label_3.setText("3")
-            self.label_4.setText("4")
-            self.label_5.setText("5")
-            self.label_6.setText("6")
-            self.label_7.setText("7")
-            self.label_8.setText("8")
-            self.label_9.setText("9")
-            self.label_10.setText("10")
+        num_sliders = self.modes_dict[selected_mode][0]
+        self.showElements(self.modes_dict['Unifrom Range'][1], False)
+        self.showElements(self.sliders_labels, False)
+        self.showElements(self.modes_dict[selected_mode][1])
+        shown_labels = []
+        for i in range(num_sliders):
+            #exec(f"self.showElements(self.label_{i+1})")
+            exec(f"self.label_{i+1}.setText(self.modes_dict[selected_mode][2][i])")
+            exec(f"shown_labels.append(self.label_{i+1})")
+        self.showElements(shown_labels)
 
     def read_wav(self):
         self.samplerate, data = wavfile.read('eleph.wav')
