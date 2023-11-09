@@ -81,7 +81,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         try:
             options = QFileDialog().options()
             options |= QFileDialog.ReadOnly
-            filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV File", "", "WAV Files (.wav);;All Files ()",
+            filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV File", "", "WAV Files (*.wav);;All Files ()",
                                                        options=options)
             if filepath:
                 self.read_wav(filepath)
