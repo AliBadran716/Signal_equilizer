@@ -31,7 +31,7 @@
        </widget>
       </item>
       <item alignment="Qt::AlignRight">
-       <widget class="QGraphicsView" name="graphicsView_3">
+       <widget class="PlotWidget" name="graphicsView_3">
         <property name="minimumSize">
          <size>
           <width>390</width>
@@ -260,7 +260,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGraphicsView" name="graphicsView_2"/>
+       <widget class="PlotWidget" name="graphicsView_2"/>
       </item>
      </layout>
     </item>
@@ -280,7 +280,7 @@
        </widget>
       </item>
       <item alignment="Qt::AlignRight">
-       <widget class="QGraphicsView" name="graphicsView_4">
+       <widget class="PlotWidget" name="graphicsView_4">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
@@ -307,7 +307,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGraphicsView" name="graphicsView"/>
+       <widget class="PlotWidget" name="graphicsView"/>
       </item>
      </layout>
     </item>
@@ -615,6 +615,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

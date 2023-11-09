@@ -97,6 +97,10 @@ class MainApp(QDialog, FORM_CLASS):
         elif selected_window == "Rectangle":
             window = self.rectangular_window(end_index - start_index + 1)
             window_title = "Rectangular Window Function"
+        else:
+            window = 1
+            scale_factor = 1
+            window_title = "No Window Function"
 
         amps[start_index:end_index + 1] *= window * scale_factor
         modified_signal_time = np.fft.ifft(np.concatenate((amps, np.flip(amps))))
