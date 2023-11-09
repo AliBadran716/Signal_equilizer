@@ -90,12 +90,38 @@ class MainApp(QMainWindow, FORM_CLASS):
     # self.graphicsView.plot(self.time_a,self.data, pen='r')
     # Compute the spectrogram for the audio
 
+    def add_signal(self):
+        """
+        Load a WAV signal file, add it to the application's data, and plot it.
+        """
+        try:
+            options = QFileDialog().options()
+            options |= QFileDialog.ReadOnly
+            filepath,  = QFileDialog.getOpenFileName(self, "Open WAV File", "", "WAV Files (.wav);;All Files ()",
+                                                       options=options)
+            if file_path:
+                self.read_wav(file_path)
+        except Exception as e:
+            print(e)
+
+    def read_wav(self, file_path):
+        self.samplerate, data = wavfile.read(file_path)
+        if data.ndim == 2:
+            self.data = data.mean(axis=1)
+        else:
+            self.data = data
+        self.time_a = np.arange(0, len(self.data)) / self.samplerate
+        # plot the signal
+        self.graphicsView.plot(self.time_a, self.data, pen='r')
+        self.DFT()
+
     def DFT(self):
         transformed = fft(self.data)
         N = len(self.data)
         xf = np.linspace(0.0, 0.5 * self.samplerate, N // 2)
 
         self.graphicsView_2.plot(xf, 2.0 / N * np.abs(transformed[:N // 2]), pen='r')
+    
 
 
 def main():  # method to start app
