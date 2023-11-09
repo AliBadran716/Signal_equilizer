@@ -72,23 +72,6 @@ class MainApp(QMainWindow, FORM_CLASS):
             exec(f"shown_labels.append(self.label_{i+1})")
         self.showElements(shown_labels)
 
-    def read_wav(self):
-        self.samplerate, data = wavfile.read('eleph.wav')
-        if data.ndim == 2:
-            self.data = data.mean(axis=1)
-        else:
-            self.data = data
-        self.time_a = np.arange(0, len(self.data)) / self.samplerate
-        imageView = ImageView()
-
-    # Compute spectrogram and set image
-    #
-
-    # colors = [(0, 0, 255, 255), (255, 255, 255, 255), (255, 0, 0, 255)]
-    # img = pg.ImageItem(image = Sxx , lut = colors)
-    # self.graphicsView_3.addItem(img)
-    # self.graphicsView.plot(self.time_a,self.data, pen='r')
-    # Compute the spectrogram for the audio
 
     def add_signal(self):
         """
@@ -97,10 +80,10 @@ class MainApp(QMainWindow, FORM_CLASS):
         try:
             options = QFileDialog().options()
             options |= QFileDialog.ReadOnly
-            filepath,  = QFileDialog.getOpenFileName(self, "Open WAV File", "", "WAV Files (.wav);;All Files ()",
+            filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV File", "", "WAV Files (.wav);;All Files ()",
                                                        options=options)
-            if file_path:
-                self.read_wav(file_path)
+            if filepath:
+                self.read_wav(filepath)
         except Exception as e:
             print(e)
 
