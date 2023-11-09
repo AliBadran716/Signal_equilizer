@@ -50,6 +50,7 @@ class MainApp(QMainWindow, FORM_CLASS):
             
 
     def handel_buttons(self):
+        self.actionOpen.triggered.connect(self.add_signal)
         self.comboBox.currentIndexChanged.connect(self.handle_sliders)
 
     def showElements(self, elements, show=True):
