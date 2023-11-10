@@ -9,7 +9,8 @@ import sys
 import numpy as np
 from os import path
 import functools
-
+import pyaudio
+from PyQt5.QtGui import QIcon
 from numpy.fft import fft
 from pyqtgraph import ImageView
 from scipy.io import wavfile
@@ -58,6 +59,8 @@ class MainApp(QMainWindow, FORM_CLASS):
                                self.label_7, self.label_8, self.label_9, self.label_10]
         self.previous_selection = None
         self.signal_added = False
+        self.playing = False
+        self.zoom_counter = 0
         self.handel_buttons()
         from m2 import MainApp as m2
         self.m2 = m2()
@@ -65,6 +68,9 @@ class MainApp(QMainWindow, FORM_CLASS):
     def handel_buttons(self):
         self.actionOpen.triggered.connect(self.add_signal)
         self.comboBox.currentIndexChanged.connect(self.handle_sliders)
+        self.play_pause_btn.clicked.connect(self.play_pause)
+        self.zoom_out_push_btn.clicked.connect(self.zoom_out)
+        self.zoom_in_push_btn.clicked.connect(self.zoom_in)
         slider = self.verticalSlider_1
         self.window_combo_box.currentIndexChanged.connect(functools.partial(self.proccess_signal, slider))
         for i in range(10):
@@ -143,6 +149,50 @@ class MainApp(QMainWindow, FORM_CLASS):
         for i in range(10):
             self.modes_dict['Unifrom Range'][4].append([xf[i * 50], xf[(i + 1) * 50]])
         return xf, amps, transformed
+    
+    def play_pause(self):
+        if not self.playing:
+            # Start playing
+            self.audio = pyaudio.PyAudio()
+            self.stream = self.audio.open(format=pyaudio.paInt16, channels=1, rate=self.samplerate, output=True)
+            self.stream.write(self.data.tobytes())
+            self.playing = True
+            icon_path = os.path.join("imgs", "OIP.png")
+            self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to pause icon
+        else:
+            # Pause
+            self.stream.stop_stream()
+            self.stream.close()
+            self.audio.terminate()
+            self.playing = False
+            icon_path = os.path.join("imgs", "preview.png")
+            self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to play icon
+
+    def zoom(self, graphicsView, zoom_factor):
+        # Get the current visible x and y ranges
+        x_min, x_max = graphicsView.getViewBox().viewRange()[0]
+        y_min, y_max = graphicsView.getViewBox().viewRange()[1]
+        # Calculate the new visible x and y ranges (zoom)
+        new_x_min = x_min * zoom_factor
+        new_x_max = x_max * zoom_factor
+        new_y_min = y_min * zoom_factor
+        new_y_max = y_max * zoom_factor
+        # Set the new visible x and y ranges
+        graphicsView.getViewBox().setRange(xRange=[new_x_min, new_x_max], yRange=[new_y_min, new_y_max])
+
+    # A function used to zoom out from the graph
+    def zoom_out(self):
+        if self.zoom_counter > -3:
+            self.zoom(self.graphicsView, 0.5)
+            self.zoom(self.graphicsView_2, 0.5)
+            self.zoom_counter -= 1
+
+    # A function used to zoom in the graph
+    def zoom_in(self):
+        if self.zoom_counter < 5:  # Set your desired limit
+            self.zoom(self.graphicsView, 1.3)
+            self.zoom(self.graphicsView_2, 1.3)
+            self.zoom_counter += 1
 
 
 def main():  # method to start app
