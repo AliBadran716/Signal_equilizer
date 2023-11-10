@@ -57,7 +57,7 @@
     </widget>
    </item>
    <item row="0" column="0" rowspan="4">
-    <widget class="QGraphicsView" name="graphicsView"/>
+    <widget class="PlotWidget" name="graphicsView"/>
    </item>
    <item row="1" column="1">
     <widget class="QLabel" name="label">
@@ -93,10 +93,17 @@
     </widget>
    </item>
    <item row="4" column="0">
-    <widget class="QGraphicsView" name="graphicsView2"/>
+    <widget class="PlotWidget" name="graphicsView2"/>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

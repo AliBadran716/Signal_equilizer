@@ -8,9 +8,12 @@ import pyqtgraph as pg
 import sys
 import numpy as np
 from os import path
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
+import functools
+
+
+from numpy.fft import fft
+from pyqtgraph import ImageView
+from scipy.io import wavfile
 
 # Load the UI file and connect it with the Python file
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "smoothingWindow.ui"))
@@ -42,47 +45,29 @@ class MainApp(QDialog, FORM_CLASS):
 
     def visualize_window(self):
         selected_window = self.window_comboBox.currentText()
+        freqs, amps = self.get_frequency_amplitude(self.signal)
+        scale_factor =  self.parameter_slider.value() / 50
+        freqs, amps, modified_signal_time, window_title = self.apply_window_to_frequency_range( freqs, amps, 20, 40, scale_factor, selected_window)
 
-        amps, freqs, modified_signal_time, window_title = self.apply_window_to_frequency_range(self.signal, 20, 40, selected_window)
-
-        plt.clf()
-        plt.plot(freqs, amps)
-        plt.title(window_title)
-        plt.xlabel("Frequency (Hz)")
-        plt.ylabel("Amplitude")
-        plt.grid()
-
-        canvas = FigureCanvas(plt.gcf())
-        canvas.draw()
-
-        scene = QGraphicsScene()
-        scene.addPixmap(QPixmap.fromImage(canvas.grab().toImage()))
-        self.graphicsView.setScene(scene)
-
-
-        plt.clf()
-        plt.plot(modified_signal_time.real)  # Plot the real part of the signal
-        plt.title("Modified Signal in Time Domain")
-        plt.xlabel("Time")
-        plt.ylabel("Amplitude")
-        plt.grid()
-
-        canvas = FigureCanvas(plt.gcf())
-        canvas.draw()
-
-        scene = QGraphicsScene()
-        scene.addPixmap(QPixmap.fromImage(canvas.grab().toImage()))
-        self.graphicsView2.setScene(scene)
+        self.graphicsView.clear()
+        self.graphicsView2.clear()
+        self.graphicsView.plot(freqs, amps, pen='b')
+        # set label and title
+        self.graphicsView.setTitle(window_title)
+        self.graphicsView.setLabel('left', 'Amplitude')
+        self.graphicsView.setLabel('bottom', 'Frequency')
+        self.graphicsView2.setTitle('Time Domain')
+        self.graphicsView2.setLabel('left', 'Amplitude')
+        self.graphicsView2.setLabel('bottom', 'Time')
+        self.graphicsView2.plot(modified_signal_time.real)
 
     # Function to apply a window to a specific frequency range
-    def apply_window_to_frequency_range(self, signal, start_freq, end_freq, selected_window):
-        scale_factor = self.parameter_slider.value() / 50
-        freqs, amps = self.get_frequency_amplitude(signal)
-
+    def apply_window_to_frequency_range(self, freqs, amps, start_freq, end_freq, scale_factor, selected_window='Select window'):
 
         # Find indices corresponding to start and end frequencies
         start_index = np.where(freqs >= start_freq)[0][0]
         end_index = np.where(freqs <= end_freq)[0][-1]
+
 
         # Apply the window function to the specific frequency range in the time domain
         if selected_window == "Hamming":
@@ -105,7 +90,7 @@ class MainApp(QDialog, FORM_CLASS):
         amps[start_index:end_index + 1] *= window * scale_factor
         modified_signal_time = np.fft.ifft(np.concatenate((amps, np.flip(amps))))
 
-        return amps, freqs, modified_signal_time, window_title
+        return  freqs, amps, modified_signal_time, window_title
 
     def select_window(self):
         selected_mode = self.window_comboBox.currentText()
