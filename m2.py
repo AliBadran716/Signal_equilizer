@@ -88,7 +88,7 @@ class MainApp(QDialog, FORM_CLASS):
             window_title = "No Window Function"
 
         amps[start_index:end_index + 1] *= window * scale_factor
-        modified_signal_time = np.fft.ifft(np.concatenate((amps, np.flip(amps))))
+        modified_signal_time = np.fft.ifft(amps)
 
         return  freqs, amps, modified_signal_time, window_title
 
@@ -163,6 +163,7 @@ class MainApp(QDialog, FORM_CLASS):
 
         signal = np.sum([amp * np.sin(2 * np.pi * freq * t) for freq, amp in zip(frequencies, amplitudes)], axis=0)
         return signal
+
 
 
     def get_amplitudes_in_range(self, freqs, amplitudes, start_freq, end_freq):

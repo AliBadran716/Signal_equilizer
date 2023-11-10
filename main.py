@@ -7,9 +7,11 @@ import pandas as pd
 import pyqtgraph as pg
 import sys
 import numpy as np
+import os
 from os import path
 import functools
 import pyaudio
+import wave
 from PyQt5.QtGui import QIcon
 from numpy.fft import fft
 from pyqtgraph import ImageView
@@ -58,6 +60,9 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
                                self.label_7, self.label_8, self.label_9, self.label_10]
         self.previous_selection = None
+        self.proccessed_freqs = None
+        self.proccessed_amps = None
+        self.proccessed_signal = None
         self.signal_added = False
         self.playing = False
         self.zoom_counter = 0
@@ -75,7 +80,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.window_combo_box.currentIndexChanged.connect(functools.partial(self.proccess_signal, slider))
         for i in range(10):
             slider = getattr(self, f"verticalSlider_{i + 1}")
-            slider.valueChanged.connect(functools.partial(self.proccess_signal, slider))
+            slider.valueChanged.connect(functools.partial(self.slider_changed, slider, i))
 
     def showElements(self, elements, show=True):
         for element in elements:
@@ -87,6 +92,9 @@ class MainApp(QMainWindow, FORM_CLASS):
     def handle_sliders(self):
         selected_mode = self.comboBox.currentText()
         num_sliders = self.modes_dict[selected_mode][0]
+        # reset slider positions
+        for i in range(10):
+            exec(f"self.verticalSlider_{i + 1}.setValue(50)")
         self.showElements(self.modes_dict['Unifrom Range'][1], False)
         self.showElements(self.sliders_labels, False)
         self.showElements(self.modes_dict[selected_mode][1])
@@ -115,7 +123,7 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.clear_graphs()
             self.read_wav(filepath)
             self.signal_added = True
-            self.proccess_signal(self.verticalSlider_1)
+            _, _, _ = self.DFT()
 
     def read_wav(self, file_path):
         self.samplerate, data = wavfile.read(file_path)
@@ -124,20 +132,38 @@ class MainApp(QMainWindow, FORM_CLASS):
         else:
             self.data = data
         self.time_a = np.arange(0, len(self.data)) / self.samplerate
+
         # plot the signal
         self.graphicsView.plot(self.time_a, self.data, pen='r')
+        self.graphicsView.setTitle('Time Domain')
 
     def proccess_signal(self, slider):
         if self.signal_added:
             self.graphicsView_2.clear()
-            selected_mode = self.comboBox.currentText()
             selected_window = self.window_combo_box.currentText()
             freq, amps, transformed = self.DFT()
             scale_factor = slider.value() / 50
 
-            proccessed_freqs, proccessed_amps, modified_signal_time, window_title = self.m2.apply_window_to_frequency_range(
+            self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
                 freq, amps, 1, 1000, scale_factor, selected_window)
-            self.graphicsView_2.plot(proccessed_freqs, proccessed_amps, pen='r')
+            self.graphicsView_2.plot(self.proccessed_freqs, self.proccessed_amps, pen='r')
+
+            self.graphicsView_3.plot(self.proccessed_signal.real, pen='r')
+
+    def slider_changed(self, slider, slider_index):
+        if self.signal_added:
+            self.graphicsView_2.clear()
+            selected_mode = self.comboBox.currentText()
+            start_freq = self.modes_dict[selected_mode][4][slider_index][0]
+            end_freq = self.modes_dict[selected_mode][4][slider_index][1]
+            selected_window = self.window_combo_box.currentText()
+            freq, amps, transformed = self.DFT()
+            scale_factor = slider.value() / 50
+
+            self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
+                freq, amps, start_freq, end_freq, scale_factor, selected_window)
+            self.graphicsView_2.plot(self.proccessed_freqs, self.proccessed_amps, pen='r')
+            self.graphicsView_3.plot(self.proccessed_signal.real, pen='r')
 
     def DFT(self):
         transformed = fft(self.data)
@@ -145,28 +171,42 @@ class MainApp(QMainWindow, FORM_CLASS):
         xf = np.linspace(0.0, 0.5 * self.samplerate, N // 2)
         amps = 2.0 / N * np.abs(transformed[:N // 2])
         self.graphicsView_2.plot(xf, amps, pen='r')
-        # divide xf into 10 ranges and store it in frequencey range of self.modes_dict of uniform ranges
-        for i in range(10):
-            self.modes_dict['Unifrom Range'][4].append([xf[i * 50], xf[(i + 1) * 50]])
+        # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
+        if len(xf) > 10:
+            n = len(xf) // 10
+            for i in range(10):
+                self.modes_dict['Unifrom Range'][4].append([xf[i * n], xf[(i + 1) * n]])
+            self.proccessed_freqs = xf
+            self.proccessed_amps = amps
+            self.proccessed_signal = transformed
         return xf, amps, transformed
-    
+
     def play_pause(self):
-        if not self.playing:
-            # Start playing
-            self.audio = pyaudio.PyAudio()
-            self.stream = self.audio.open(format=pyaudio.paInt16, channels=1, rate=self.samplerate, output=True)
-            self.stream.write(self.data.tobytes())
-            self.playing = True
-            icon_path = os.path.join("imgs", "OIP.png")
-            self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to pause icon
-        else:
-            # Pause
-            self.stream.stop_stream()
-            self.stream.close()
-            self.audio.terminate()
-            self.playing = False
-            icon_path = os.path.join("imgs", "preview.png")
-            self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to play icon
+        if self.signal_added:
+            if not self.playing:
+                self.playing = True
+                icon_path = os.path.join("imgs", "OIP.png")
+                self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to pause icon
+                self.play()
+            else:
+                self.playing = False
+                icon_path = os.path.join("imgs", "preview.png")
+                self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to play icon
+                self.pause()
+
+    def play(self):
+        # play proccessed signal
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paFloat32, channels=1, rate=self.samplerate, output=True)
+        stream.write(self.proccessed_signal.real.astype(np.float32).tobytes())
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+    def pause(self):
+        # pause proccessed signal
+        pass
+
 
     def zoom(self, graphicsView, zoom_factor):
         # Get the current visible x and y ranges
