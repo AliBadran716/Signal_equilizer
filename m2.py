@@ -88,7 +88,7 @@ class MainApp(QDialog, FORM_CLASS):
             window_title = "No Window Function"
 
         amps[start_index:end_index + 1] *= window * scale_factor
-        modified_signal_time = np.fft.ifft(amps)
+        modified_signal_time = np.fft.irfft(amps).real
 
         return  freqs, amps, modified_signal_time, window_title
 
