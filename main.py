@@ -128,7 +128,7 @@ class MainApp(QMainWindow, FORM_CLASS):
     def read_wav(self, file_path):
         self.samplerate, data = wavfile.read(file_path)
         if data.ndim == 2:
-            self.data = data.mean(axis=1)
+            self.data = data[:, 0]
         else:
             self.data = data
         self.time_a = np.arange(0, len(self.data)) / self.samplerate
@@ -197,8 +197,8 @@ class MainApp(QMainWindow, FORM_CLASS):
     def play(self):
         # play proccessed signal
         p = pyaudio.PyAudio()
-        stream = p.open(format=pyaudio.paFloat32, channels=1, rate=self.samplerate, output=True)
-        stream.write(self.proccessed_signal.real.astype(np.float32).tobytes())
+        stream = p.open(format=pyaudio.paInt16, channels=1, rate=self.samplerate, output=True)
+        stream.write(self.data.tobytes())
         stream.stop_stream()
         stream.close()
         p.terminate()
