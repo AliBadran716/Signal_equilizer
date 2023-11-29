@@ -274,6 +274,20 @@ QStatusBar {
        </spacer>
       </item>
       <item>
+       <widget class="QComboBox" name="signal_choosen">
+        <item>
+         <property name="text">
+          <string>Original Signal</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Processed Signal</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QPushButton" name="play_pause_btn">
@@ -818,7 +832,7 @@ QStatusBar {
      <x>0</x>
      <y>0</y>
      <width>962</width>
-     <height>24</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
