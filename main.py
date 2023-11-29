@@ -68,6 +68,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.proccessed_freqs = None
         self.proccessed_amps = None
         self.proccessed_signal = None
+        self.ifft_signal = None
         self.signal_added = False
         self.zoom_counter = 0
         self.playing = False
@@ -148,6 +149,8 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.data = data
         self.time_a = np.arange(0, len(self.data)) / self.samplerate
 
+        fft_data = np.fft.rfft(self.data)
+        self.ifft_signal = np.fft.irfft(fft_data).real
         # plot the signal
         self.graphicsView.plot(self.time_a, self.data, pen='r')
         self.graphicsView.setTitle('Time Domain')
@@ -196,118 +199,68 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.proccessed_signal = transformed
         return xf, amps, transformed
 
-    def play_pause_processed(self): 
-        processed_data = self.proccessed_signal 
-        #print(len(processed_data))
-        
-        temp_wav_file = QTemporaryFile()
-        temp_wav_file.setAutoRemove(False)
-        temp_wav_file.open()
-
-        with wave.open(temp_wav_file.fileName(), 'w') as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(44100)
-            wf.writeframes((processed_data.real).astype(np.int16).tobytes())
-
-        # Use QMediaPlayer to play the temporary WAV file
-
-        audio_url = QUrl.fromLocalFile(temp_wav_file.fileName())
-        media_content = QMediaContent(audio_url)
-        self.media_player.setMedia(media_content)
+    # play and pause
+    def play_pause_processed(self):
         if self.signal_added:
-             if not self.playing:
-                 print("playing")
-                 self.playing = True
-                 self.paused = False
-                 self.play()
-    #             # if self.paused:
-    #             #     # If paused, resume from the last position
-    #             #     threading.Thread(target=self.play, args=(self.playback_position,)).start()
-    #             # else:
-    #             #     # If not paused, start from the beginning
-    #             #     threading.Thread(target=self.play).start()
-    #             # self.paused = False  # Reset pause state
-    #             icon_path = os.path.join("imgs", "OIP.png")
-    #             self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to pause icon
-             else:
-                 self.playing = False
-                 self.paused = True
-                 print("paused")
-                 icon_path = os.path.join("imgs", "preview.png")
-                 self.play_pause_btn.setIcon(QIcon(icon_path))
-                 self.pause()  # Change to play icon
-    #             # self.stop_event.set()  # Signal playback thread to stop
+            if self.playing:
+                self.pause()
+            else:
+                self.play()
+        else:
+            self.add_signal()
 
-        
-    
-    # def play_pause(self):
-    #     if self.signal_added:
-    #         if not self.playing:
-    #             self.playing = True
-    #             self.paused = False
-    #             self.play()
-    #             # if self.paused:
-    #             #     # If paused, resume from the last position
-    #             #     threading.Thread(target=self.play, args=(self.playback_position,)).start()
-    #             # else:
-    #             #     # If not paused, start from the beginning
-    #             #     threading.Thread(target=self.play).start()
-    #             # self.paused = False  # Reset pause state
-    #             icon_path = os.path.join("imgs", "OIP.png")
-    #             self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to pause icon
-    #         else:
-    #             self.playing = False
-    #             self.paused = True
-    #             icon_path = os.path.join("imgs", "preview.png")
-    #             self.play_pause_btn.setIcon(QIcon(icon_path))
-    #             self.pause()  # Change to play icon
-    #             # self.stop_event.set()  # Signal playback thread to stop
-
-    def play(self, start_position=0):
-        self.media_player.play()
-        # play processed signal in a separate thread
-        # self.p = pyaudio.PyAudio()
-        # self.stream = self.p.open(format=pyaudio.paInt16, channels=1, rate=self.samplerate, output=True, start=False)
-        # self.playback_position = start_position
-
-        # try:
-        #     while self.playing and self.playback_position < len(self.data):
-        #         if self.stream.is_stopped():
-        #             self.stream.start_stream()
-
-        #         chunk = self.data[self.playback_position:self.playback_position + self.chunk_size].tobytes()
-        #         self.stream.write(chunk)
-        #         self.playback_position += len(chunk)
-
-        #     # Ensure the stream is stopped before closing
-        #     self.stream.stop_stream()
-        #     self.stream.close()
-
-        # except OSError as e:
-        #     print(f"Error during playback: {e}")
-        # finally:
-        #     # Close the stream and terminate PyAudio instance
-        #     self.stream.stop_stream()
-        #     self.stream.close()
-        #     self.p.terminate()
+    def play(self):
+        self.playing = True
+        self.paused = False
+        icon_path = os.path.join("imgs", "OIP.png")
+        self.play_pause_btn.setIcon(QIcon(icon_path))
+        self.playback_position = 0
+        self.stop_event.clear()
+        self.p = pyaudio.PyAudio()
+        self.stream = self.p.open(format=pyaudio.paInt16, channels=1, rate=self.samplerate, output=True,
+                                  stream_callback=self.get_next_chunk)
+        self.stream.start_stream()
 
     def pause(self):
-        self.media_player.pause()
-        # pause processed signal
-        # if self.stream and self.stream.is_active():
-        #     # Calculate the remaining playback position when paused
-        #     remaining = len(self.data) - self.playback_position
-        #     self.playback_position += min(remaining, self.stream.get_write_available())
-        #     self.stream.stop_stream()
-        #     # No need to close the stream here, as it will be closed in the play method when completely played
+        self.paused = True
+        self.playing = False
+        icon_path = os.path.join("imgs", "preview.png")
+        self.play_pause_btn.setIcon(QIcon(icon_path))
+        self.stream.stop_stream()
+        self.stream.close()
+        self.p.terminate()
 
-    def __del__(self):
-        if self.stream:
-            self.stream.stop_stream()
-            self.stream.close()
-        if self.p:
-            self.p.terminate()
+    def get_next_chunk(self, in_data, frame_count, time_info, status):
+        data = self.ifft_signal[self.playback_position:self.playback_position + self.chunk_size]
+        self.playback_position += self.chunk_size
+        if self.playback_position >= len(self.ifft_signal):
+            self.playback_position = 0
+            self.stop_event.set()
+        return data, pyaudio.paContinue
+
+    # replay
+    def replay(self):
+        self.playback_position = 0
+        self.playing = True
+        self.paused = False
+        icon_path = os.path.join("imgs", "OIP.png")
+        self.play_pause_btn.setIcon(QIcon(icon_path))
+        threading.Thread(target=self.play).start()
+
+    # stop
+    def stop(self):
+        self.playback_position = 0
+        self.playing = False
+        self.paused = False
+        icon_path = os.path.join("imgs", "OIP.png")
+        self.play_pause_btn.setIcon(QIcon(icon_path))
+        self.stream.stop_stream()
+        self.stream.close()
+        self.p.terminate()
+
+
+
+    # A function used to zoom in and out of the graph
     def zoom(self, graphicsView, zoom_factor):
         # Get the current visible x and y ranges
         x_min, x_max = graphicsView.getViewBox().viewRange()[0]

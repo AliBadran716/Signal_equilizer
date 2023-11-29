@@ -89,8 +89,9 @@ class MainApp(QDialog, FORM_CLASS):
 
         amps[start_index:end_index + 1] *= window * scale_factor
         modified_signal_time = np.fft.irfft(amps).real
-        print(sampledrate)
-        scipy.io.wavfile.write('music_trash/processed_signal.wav', sampledrate, modified_signal_time.real.astype(np.int16))
+        # play modified_
+        # print(sampledrate)
+        # scipy.io.wavfile.write('music_trash/processed_signal.wav', sampledrate, modified_signal_time.real.astype(np.int16))
 
         return  freqs, amps, modified_signal_time, window_title
 
