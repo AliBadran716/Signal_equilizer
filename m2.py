@@ -9,8 +9,8 @@ import sys
 import numpy as np
 from os import path
 import functools
-
-
+import scipy
+from scipy.io import wavfile
 from numpy.fft import fft
 from pyqtgraph import ImageView
 from scipy.io import wavfile
@@ -62,7 +62,7 @@ class MainApp(QDialog, FORM_CLASS):
         self.graphicsView2.plot(modified_signal_time.real)
 
     # Function to apply a window to a specific frequency range
-    def apply_window_to_frequency_range(self, freqs, amps, start_freq, end_freq, scale_factor, selected_window='Select window'):
+    def apply_window_to_frequency_range(self, freqs, amps, start_freq, end_freq, scale_factor, selected_window='Select window', sampledrate = 200):
 
         # Find indices corresponding to start and end frequencies
         start_index = np.where(freqs >= start_freq)[0][0]
@@ -89,6 +89,8 @@ class MainApp(QDialog, FORM_CLASS):
 
         amps[start_index:end_index + 1] *= window * scale_factor
         modified_signal_time = np.fft.irfft(amps).real
+        print(sampledrate)
+        scipy.io.wavfile.write('music_trash/processed_signal.wav', sampledrate, modified_signal_time.real.astype(np.int16))
 
         return  freqs, amps, modified_signal_time, window_title
 
