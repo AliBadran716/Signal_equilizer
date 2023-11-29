@@ -14,6 +14,9 @@ from scipy.io import wavfile
 from numpy.fft import fft
 from pyqtgraph import ImageView
 from scipy.io import wavfile
+import librosa
+import librosa.display      
+from numpy.fft import fft,rfft,rfftfreq,irfft,fftfreq
 
 # Load the UI file and connect it with the Python file
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "smoothingWindow.ui"))
@@ -90,10 +93,61 @@ class MainApp(QDialog, FORM_CLASS):
         amps[start_index:end_index + 1] *= window * scale_factor
         modified_signal_time = np.fft.irfft(amps).real
         # play modified_
-        # print(sampledrate)
-        # scipy.io.wavfile.write('music_trash/processed_signal.wav', sampledrate, modified_signal_time.real.astype(np.int16))
+        #print('sampledrate')
+        scipy.io.wavfile.write('music_trash/processed_signal.wav', sampledrate, modified_signal_time.real.astype(np.int16))
 
         return  freqs, amps, modified_signal_time, window_title
+
+    def Fourier_Transform_Signal(self,amplitude_signal, sampling_rate):
+        """
+        rrft-->  specialized version of the FFT algorithm that is 
+        optimized for real-valued signals,  returns only positive frequencies
+        
+        rfftfreq--> function from the NumPy library is used to compute the frequencies 
+        directly from the signal, returns an array of frequencies corresponding to the 
+        output of the rfft function. 
+        """
+        number_of_samples = len(amplitude_signal)
+        
+        sampling_period = 1/sampling_rate
+        
+        magnitude_freq_components = rfft(amplitude_signal)
+        
+        frequency_components = rfftfreq(number_of_samples,sampling_period)
+        
+        
+        return magnitude_freq_components,frequency_components
+
+
+    def Get_Max_Frequency(self,amplitude_signal, sampling_rate):
+        
+        number_of_samples = len(amplitude_signal)
+        
+        sampling_period = 1/sampling_rate
+        
+        magnitude_freq_components = rfft(amplitude_signal)
+        
+        frequency_components = rfftfreq(number_of_samples,sampling_period)
+        
+        max_frequency = frequency_components[np.argmax(np.abs(magnitude_freq_components))]
+        
+        return max_frequency
+
+
+    def Inverse_Fourier_Transform(self,Magnitude_frequency_components):
+
+        """
+        Function to apply inverse fourier transform to transform the signal back to the time 
+        domain
+        
+        After modifying the magnitude of the signal of some frequency components
+        we apply the irfft to get the modified signal in the time domain (reconstruction)
+        """
+        
+        Amplitude_time_domain = irfft(Magnitude_frequency_components) #Transform the signal back to the time domain.
+        
+        return np.real(Amplitude_time_domain)  #ensure the output is real.
+    
 
     def select_window(self):
         selected_mode = self.window_comboBox.currentText()

@@ -21,6 +21,23 @@ from numpy.fft import fft, ifft
 from pyqtgraph import ImageView
 import scipy
 from scipy.io import wavfile
+#Import necessary libraries
+#import  streamlit_vertical_slider  as svs
+#from Signal_Generation_class import Signal
+import numpy as np
+import pandas as pd
+import librosa
+import librosa.display      
+from numpy.fft import fft,rfft,rfftfreq,irfft,fftfreq
+#import plotly.graph_objects as go
+#import streamlit as st
+#import soundfile as soundf
+#import matplotlib.pyplot as plt
+import time
+#import altair as alt
+#import plotly.graph_objs as go
+#from plotly.offline import iplot
+import scipy.io.wavfile as wav 
 
 # Load the UI file and connect it with the Python file
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "main.ui"))
@@ -136,12 +153,13 @@ class MainApp(QMainWindow, FORM_CLASS):
         if filepath:
             self.clear_graphs()
             self.read_wav(filepath)
+            self.load_audio_file(filepath)
             self.signal_added = True
             _, _, _ = self.DFT()
 
     def read_wav(self, file_path):
         self.samplerate, data = wavfile.read(file_path)
-        print(len(data))
+        #print(len(data))
 
         if data.ndim == 2:
             self.data = data[:, 0]
@@ -154,6 +172,47 @@ class MainApp(QMainWindow, FORM_CLASS):
         # plot the signal
         self.graphicsView.plot(self.time_a, self.data, pen='r')
         self.graphicsView.setTitle('Time Domain')
+    def load_audio_file(self, path_file_upload):
+    
+        """
+        Function to upload audio file given file path using librosa
+        
+        (Librosa is a Python package for analyzing and working with audio files,
+        and it can handle a variety of audio file formats, including WAV, MP3, FLAC, OGG, 
+        and many more.)
+        
+        Parameters:
+        Audio file path
+        
+        Output:
+        Audio samples
+        Sampling rate
+        """
+        if path_file_upload is not None:
+            audio_samples,sampling_rate=librosa.load(path_file_upload)
+
+        mag_freq_comps, freq_comps = self.m2.Fourier_Transform_Signal(audio_samples, sampling_rate)
+        max_freq = self.m2.Get_Max_Frequency(audio_samples, sampling_rate)
+        inversed_signal = self.m2.Inverse_Fourier_Transform(mag_freq_comps)
+        # print(len(inversed_signal))
+        # print(inversed_signal.shape)
+        # print(inversed_signal[5])
+        # print(len(audio_samples))
+        # print(audio_samples.shape)
+        # print(audio_samples[5])
+        
+        
+        scipy.io.wavfile.write('music_trash/inversed_signal.wav', sampling_rate, inversed_signal)
+        audio_url = QUrl.fromLocalFile('music_trash/inversed_signal.wav')
+        media_content = QMediaContent(audio_url)
+        self.media_player.setMedia(media_content)
+
+
+            
+        #return audio_samples,sampling_rate   
+    
+    
+
 
     def proccess_signal(self, slider):
         if self.signal_added:
@@ -161,7 +220,7 @@ class MainApp(QMainWindow, FORM_CLASS):
             selected_window = self.window_combo_box.currentText()
             freq, amps, transformed = self.DFT()
             scale_factor = slider.value() / 50
-            print(self.samplerate)
+            #print(self.samplerate)
             self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
                 freq, amps, 1, 1000, scale_factor, selected_window, self.samplerate)
             self.graphicsView_2.plot(self.proccessed_freqs, self.proccessed_amps, pen='r')
@@ -201,34 +260,43 @@ class MainApp(QMainWindow, FORM_CLASS):
 
     # play and pause
     def play_pause_processed(self):
-        if self.signal_added:
-            if self.playing:
-                self.pause()
-            else:
-                self.play()
-        else:
-            self.add_signal()
-
+        processed_data = self.proccessed_signal 
+        self.media_player.play()
+        #print(len(processed_data))
+        # temp_wav_file = QTemporaryFile()
+        # temp_wav_file.setAutoRemove(False)
+        # temp_wav_file.open()
+        # with wave.open(temp_wav_file.fileName(), 'w') as wf:
+        #     wf.setnchannels(1)
+        #     wf.setsampwidth(2)
+        #     wf.setframerate(44100)
+        #     wf.writeframes((processed_data.real).astype(np.int16).tobytes())
+        # # Use QMediaPlayer to play the temporary WAV file
+        #audio_url = QUrl.fromLocalFile('music_trash/processed_signal.wav')
+        #media_content = QMediaContent(audio_url)
+        #self.media_player.setMedia(media_content)
+    #     if self.signal_added:
+    #         if not self.playing:
+    #              print("playing")
+    #              self.playing = True
+    #              self.paused = False
+    #              self.play()
+    #              icon_path = os.path.join("imgs", "OIP.png")
+    #              self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to pause icon
+    #         else:
+    #              self.playing = False
+    #              self.paused = True
+    #              print("paused")
+    #              icon_path = os.path.join("imgs", "preview.png")
+    #              self.play_pause_btn.setIcon(QIcon(icon_path))
+    #              self.pause()  # Change to play icon
+    # #             # self.stop_event.set()  # Signal playback thread to stop
+        
     def play(self):
-        self.playing = True
-        self.paused = False
-        icon_path = os.path.join("imgs", "OIP.png")
-        self.play_pause_btn.setIcon(QIcon(icon_path))
-        self.playback_position = 0
-        self.stop_event.clear()
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=pyaudio.paInt16, channels=1, rate=self.samplerate, output=True,
-                                  stream_callback=self.get_next_chunk)
-        self.stream.start_stream()
+        self.media_player.play()
 
     def pause(self):
-        self.paused = True
-        self.playing = False
-        icon_path = os.path.join("imgs", "preview.png")
-        self.play_pause_btn.setIcon(QIcon(icon_path))
-        self.stream.stop_stream()
-        self.stream.close()
-        self.p.terminate()
+        self.media_player.pause()
 
     def get_next_chunk(self, in_data, frame_count, time_info, status):
         data = self.ifft_signal[self.playback_position:self.playback_position + self.chunk_size]
