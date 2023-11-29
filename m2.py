@@ -90,9 +90,9 @@ class MainApp(QDialog, FORM_CLASS):
             scale_factor = 1
             window_title = "No Window Function"
 
-        amps[start_index:end_index + 1] *= window * scale_factor
-        modified_signal_time = np.fft.irfft(amps).real
-        # play modified_
+        amps[start_index:end_index + 1] = window * scale_factor
+        modified_signal_time = self.Inverse_Fourier_Transform(amps)
+        # play modified
         #print('sampledrate')
         scipy.io.wavfile.write('music_trash/processed_signal.wav', sampledrate, modified_signal_time.real.astype(np.int16))
 
