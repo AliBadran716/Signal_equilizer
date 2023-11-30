@@ -72,7 +72,6 @@ class MainApp(QMainWindow, FORM_CLASS):
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
                                self.label_7, self.label_8, self.label_9, self.label_10]
-        self.speed_list = ['x0.5', 'x1', 'x1.5','x1.75', 'x2']
         self.proccessed_freqs = None
         self.proccessed_amps = None
         self.proccessed_signal = None
