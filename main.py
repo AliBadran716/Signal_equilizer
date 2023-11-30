@@ -12,36 +12,21 @@ import numpy as np
 import os
 from os import path
 import tempfile
-import threading
 import functools
-import pyaudio
 import sounddevice as sd
 import wave
 from PyQt5.QtGui import QIcon
-from numpy.fft import fft, ifft
 from pyqtgraph import ImageView
 import scipy
 from scipy.io import wavfile
-#Import necessary libraries
-#import  streamlit_vertical_slider  as svs
-#from Signal_Generation_class import Signal
 import numpy as np
 import pandas as pd
 import librosa
 import librosa.display      
-from numpy.fft import fft,rfft,rfftfreq,irfft,fftfreq
-#import plotly.graph_objects as go
-#import streamlit as st
-#import soundfile as soundf
-#import matplotlib.pyplot as plt
-import time
-#import altair as alt
-#import plotly.graph_objs as go
-#from plotly.offline import iplot
+from numpy.fft import fft, ifft, rfft, rfftfreq, irfft, fftfreq
 import scipy.io.wavfile as wav 
 from scipy.signal import spectrogram
 from pyqtgraph import GraphicsLayoutWidget
-import os
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -87,22 +72,14 @@ class MainApp(QMainWindow, FORM_CLASS):
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
                                self.label_7, self.label_8, self.label_9, self.label_10]
-        self.previous_selection = None
+        self.speed_list = ['x0.5', 'x1', 'x1.5','x1.75', 'x2']
         self.proccessed_freqs = None
         self.proccessed_amps = None
         self.proccessed_signal = None
-        self.inversed_data = None
-        # Initialize a QMediaPlayer instance
-        self.media_player = QMediaPlayer()
         self.signal_added = False
         self.zoom_counter = 0
-        self.playing = False
-        self.paused = False
-        self.stop_event = threading.Event()  # Event to signal when to stop playback
-        self.p = None  # PyAudio instance
-        self.stream = None
-        self.playback_position = 0  # To keep track of playback position
-        self.chunk_size = 400000 # Adjust this value
+        # Initialize a QMediaPlayer instance
+        self.media_player = QMediaPlayer()
         self.handel_buttons()
         from m2 import MainApp as m2
         self.m2 = m2()
@@ -111,6 +88,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.actionOpen.triggered.connect(self.add_signal)
         self.comboBox.currentIndexChanged.connect(self.handle_sliders)
         self.signal_choosen.currentIndexChanged.connect(self.clear_media_player)
+        self.speed_selection.currentIndexChanged.connect(self.change_speed)
         self.play_pause_btn.clicked.connect(self.toggle_playback)
         # Connect the stateChanged signal to the update_icon method
         self.media_player.stateChanged.connect(self.update_icon)
@@ -140,6 +118,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         layout = QVBoxLayout()
         layout.addWidget(canvas)
         widget.setLayout(layout)
+
     def handle_sliders(self):
         selected_mode = self.comboBox.currentText()
         num_sliders = self.modes_dict[selected_mode][0]
@@ -174,7 +153,6 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.clear_graphs()
             self.load_audio_file(self.filepath)
             self.signal_added = True
-            _, _, _ = self.DFT()
 
        
     def load_audio_file(self, path_file_upload):
@@ -202,7 +180,13 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.graphicsView.plot(self.time_a, self.data, pen='r')
             self.graphicsView.setTitle('Time Domain')
             self.spectrogram(self.data, self.sampling_rate,self.widget)
-
+            xf, _, _ = self.DFT()
+            # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
+            if len(xf) > 10:
+                n = len(xf) // 10
+                for i in range(10):
+                    self.modes_dict['Unifrom Range'][4].append([xf[i * n], xf[(i + 1) * n]])
+            
 
     def proccess_signal(self, slider):
         if self.signal_added:
@@ -212,17 +196,16 @@ class MainApp(QMainWindow, FORM_CLASS):
             scale_factor = slider.value() / 50
             
             self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
-                freq, amps,transformed, 1, 1000, scale_factor, selected_window, self.sampling_rate )
+                freq, amps, transformed, 1, 1000, scale_factor, selected_window, self.sampling_rate )
             
             self.graphicsView_2.plot(self.proccessed_freqs, abs(self.proccessed_amps), pen='r')
-            # self.proccessed_signal = self.proccessed_amps * np.exp(1j * np.angle(transformed[:len(self.proccessed_amps)]))
-            self.graphicsView_3.plot(self.time_a,self.proccessed_signal, pen='r')
-            self.spectrogram(self.proccessed_signal, self.sampling_rate,self.widget_2)
+            # Construct the complex spectrum
+            self.graphicsView_3.plot(self.time_a ,self.proccessed_signal, pen='r')
+            self.spectrogram(self.proccessed_signal, self.sampling_rate ,self.widget_2)
 
 
     def slider_changed(self, slider, slider_index):
         if self.signal_added:
-            
             self.graphicsView_2.clear()
             selected_mode = self.comboBox.currentText()
             start_freq = self.modes_dict[selected_mode][4][slider_index][0]
@@ -234,54 +217,29 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
                 freq, amps,transformed, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
             
-             
-            
             self.graphicsView_2.plot(self.proccessed_freqs, self.proccessed_amps, pen='r')
-            
-            # Construct the complex spectrum
-            
-            #self.proccessed_signal = self.proccessed_amps * np.exp(1j * np.angle(transformed[:len(self.proccessed_freqs)]))
-            # Perform the IDFT        
+            # Construct the complex spectrum      
             self.graphicsView_3.plot(self.time_a,self.proccessed_signal, pen='r')
             self.spectrogram(self.proccessed_signal, self.sampling_rate,self.widget_2)
             
 
-
     def DFT(self):
         transformed, xf = self.m2.Fourier_Transform_Signal(self.data, self.sampling_rate)
-        self.inversed_data = self.m2.Inverse_Fourier_Transform(transformed)
-        # self.inversed_data = self.inversed_data * 1000000000
-        
-        
-        N = len(self.data)
         self.graphicsView_2.plot(xf,abs(transformed), pen='r')
-        # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
-        if len(xf) > 10:
-            n = len(xf) // 10
-            for i in range(10):
-                self.modes_dict['Unifrom Range'][4].append([xf[i * n], xf[(i + 1) * n]])
-            # self.proccessed_freqs = xf
-            # self.proccessed_amps = abs(transformed)
-            # self.proccessed_signal = transformed
-            
-        return xf , abs(transformed),  transformed
+        return xf, abs(transformed), transformed
 
     def create_temp_wav_file(self):
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         temp_file.close()
-
         wav_file_path = temp_file.name
-
         # Normalize the audio data
         normalized_data = self.proccessed_signal
-
         # Write the normalized audio data to the temporary WAV file
         with wave.open(wav_file_path, 'w') as wav_file:
             wav_file.setnchannels(1)  # Mono audio
             wav_file.setsampwidth(2)  # 16-bit audio
             wav_file.setframerate(44100)  # Sample rate
             wav_file.writeframes(normalized_data.tobytes())
-
         return wav_file_path
 
     
@@ -295,7 +253,6 @@ class MainApp(QMainWindow, FORM_CLASS):
                 else:
                     self.temp_wav_file = self.create_temp_wav_file()
                     self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(self.temp_wav_file)))
-
             if self.media_player.state() == QMediaPlayer.PlayingState:
                 self.media_player.pause()
             else:
@@ -303,10 +260,18 @@ class MainApp(QMainWindow, FORM_CLASS):
         else:
             self.add_signal()
 
+
+    def rewind_signal(self):
+        if self.signal_added:
+            self.media_player.setPosition(0)
+            self.media_player.play()
+
+       
     def clear_media_player(self):
         self.media_player.stop()  # Stop playback if currently playing
         self.media_player.setMedia(QMediaContent())  # Clear media content
 
+  
     def update_icon(self, state):
         if state == QMediaPlayer.PlayingState:
             icon_path = os.path.join("imgs", "pause.png")
@@ -316,7 +281,6 @@ class MainApp(QMainWindow, FORM_CLASS):
             icon_path = os.path.join("imgs", "play.png")
             # You may want to seek back to the beginning for replay
             self.media_player.setPosition(0)
-
         # Change the button icon
         self.play_pause_btn.setIcon(QIcon(icon_path))
 
@@ -334,13 +298,6 @@ class MainApp(QMainWindow, FORM_CLASS):
         # Set the new visible x and y ranges
         graphicsView.getViewBox().setRange(xRange=[new_x_min, new_x_max], yRange=[new_y_min, new_y_max])
 
-    # A function used to zoom out from the graph
-    def zoom_out(self):
-        if self.zoom_counter > -3:
-            self.zoom(self.graphicsView, 0.5)
-            self.zoom(self.graphicsView_2, 0.5)
-            self.zoom_counter -= 1
-
     # A function used to zoom in the graph
     def zoom_in(self):
         if self.zoom_counter < 5:  # Set your desired limit
@@ -348,14 +305,26 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.zoom(self.graphicsView_2, 1.3)
             self.zoom_counter += 1
 
-    def rewind_signal(self):
-        self.playback_position = 0
-        self.playing = True
-        self.paused = False
-        icon_path = os.path.join("imgs", "OIP.png")
-        self.play_pause_btn.setIcon(QIcon(icon_path))  # Change to pause icon
-        threading.Thread(target=self.play).start()
+    # A function used to zoom out from the graph
+    def zoom_out(self):
+        if self.zoom_counter > -3:
+            self.zoom(self.graphicsView, 0.5)
+            self.zoom(self.graphicsView_2, 0.5)
+            self.zoom_counter -= 1
 
+    
+    def change_speed(self):
+        speed = self.speed_selection.currentText()
+        if speed == 'x0.5':
+            self.media_player.setPlaybackRate(0.5)
+        elif speed == 'x1':
+            self.media_player.setPlaybackRate(1)
+        elif speed == 'x1.5':
+            self.media_player.setPlaybackRate(1.5)
+        elif speed == 'x1.75':
+            self.media_player.setPlaybackRate(1.75)
+        elif speed == 'x2':
+            self.media_player.setPlaybackRate(2)
 
 def main():  # method to start app
     app = QApplication(sys.argv)

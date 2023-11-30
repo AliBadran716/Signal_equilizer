@@ -70,8 +70,6 @@ class MainApp(QDialog, FORM_CLASS):
         # Find indices corresponding to start and end frequencies
         start_index = np.where(freqs >= start_freq)[0][0]
         end_index = np.where(freqs <= end_freq)[0][-1]
-
-
         # Apply the window function to the specific frequency range in the time domain
         if selected_window == "Hamming":
             window = self.hamming_window(end_index - start_index + 1)
@@ -222,15 +220,6 @@ class MainApp(QDialog, FORM_CLASS):
     def gaussian_window(self, window_size, sigma=1):
         return np.exp(-0.5 * ((np.arange(window_size) - (window_size - 1) / 2) / sigma) ** 2)
 
-    # def set_label_text(self):
-    #     if self.rectangle:
-    #         self.label.setText('Window size')
-    #     elif self.hamming:
-    #
-    #     elif self.hanning:
-    #
-    #     elif self.gaussian:
-
     def adjust_window_size(self, window, signal):
         # Adjust window size to match the signal length
         if len(window) != len(signal):
@@ -242,17 +231,13 @@ class MainApp(QDialog, FORM_CLASS):
         t = np.linspace(0, duration, num_points, endpoint=False)  # Time points
         frequencies = np.random.uniform(1, 100, num_frequencies)  # Generate random frequencies
         amplitudes = np.random.rand(num_frequencies)  # Random amplitudes for each frequency
-
         signal = np.sum([amp * np.sin(2 * np.pi * freq * t) for freq, amp in zip(frequencies, amplitudes)], axis=0)
         return signal
-
-
 
     def get_amplitudes_in_range(self, freqs, amplitudes, start_freq, end_freq):
         # Find the indices corresponding to start and end frequencies
         start_index = np.where(freqs >= start_freq)[0][0]
         end_index = np.where(freqs <= end_freq)[0][-1]
-
         # Extract amplitudes within the frequency range
         amplitudes_in_range = amplitudes[start_index:end_index + 1]
         freqs_in_range = freqs[start_index:end_index + 1]
@@ -265,7 +250,6 @@ class MainApp(QDialog, FORM_CLASS):
         freqs = np.fft.fftfreq(N, T)[:N // 2]  # Get the frequencies
         fft_vals = np.fft.fft(sig)  # Compute FFT
         fft_vals = 2.0 / N * np.abs(fft_vals[0:N // 2])  # Get amplitude
-
         return freqs, fft_vals
 
 

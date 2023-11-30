@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1109</width>
-    <height>856</height>
+    <width>1190</width>
+    <height>745</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -387,12 +387,12 @@ QStatusBar {
           </item>
           <item>
            <property name="text">
-            <string>x1</string>
+            <string>x0.5</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>x1.25</string>
+            <string>x1</string>
            </property>
           </item>
           <item>
@@ -824,8 +824,8 @@ QStatusBar {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1109</width>
-     <height>23</height>
+     <width>1190</width>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
