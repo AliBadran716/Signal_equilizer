@@ -90,7 +90,7 @@ class MainApp(QDialog, FORM_CLASS):
             scale_factor = 1
             window_title = "No Window Function"
 
-        amps[start_index:end_index + 1] = window * scale_factor
+        amps[start_index:end_index + 1] *= window * scale_factor
         modified_signal_time = self.Inverse_Fourier_Transform(amps)
         # play modified
         #print('sampledrate')
@@ -111,28 +111,41 @@ class MainApp(QDialog, FORM_CLASS):
         
         sampling_period = 1/sampling_rate
         
-        magnitude_freq_components = rfft(amplitude_signal)
+        magnitude_freq_components = rfft(amplitude_signal) / number_of_samples
         
         frequency_components = rfftfreq(number_of_samples,sampling_period)
         
         
         return magnitude_freq_components,frequency_components
 
-
-    def Get_Max_Frequency(self,amplitude_signal, sampling_rate):
-        
+    def Get_Max_Frequency(self, amplitude_signal, sampling_rate):
         number_of_samples = len(amplitude_signal)
-        
-        sampling_period = 1/sampling_rate
-        
-        magnitude_freq_components = rfft(amplitude_signal)
-        
-        frequency_components = rfftfreq(number_of_samples,sampling_period)
-        
-        max_frequency = frequency_components[np.argmax(np.abs(magnitude_freq_components))]
-        
-        return max_frequency
+        sampling_period = 1 / sampling_rate
 
+        # Compute magnitude frequency components
+        magnitude_freq_components = np.abs(rfft(amplitude_signal))
+        print('magnitude_freq_components')
+        print(magnitude_freq_components)
+
+        # Exclude the zero frequency component
+        magnitude_freq_components[0] = 0
+
+        # Compute frequency components
+        frequency_components = rfftfreq(number_of_samples, sampling_period)
+        print('frequency_components')
+        print(frequency_components)
+
+        # Find the index of the maximum magnitude
+        max_magnitude_index = np.argmax(magnitude_freq_components)
+        print('max_magnitude_index')
+        print(max_magnitude_index)
+
+        # Find the corresponding frequency
+        max_frequency = frequency_components[max_magnitude_index]
+        print('max_frequency')
+        print(max_frequency)
+
+        return max_frequency
 
     def Inverse_Fourier_Transform(self,Magnitude_frequency_components):
 
@@ -147,7 +160,20 @@ class MainApp(QDialog, FORM_CLASS):
         Amplitude_time_domain = irfft(Magnitude_frequency_components) #Transform the signal back to the time domain.
         
         return np.real(Amplitude_time_domain)  #ensure the output is real.
-    
+
+    def get_max_amplitude(self, audio_data):
+        """
+        Get the maximum amplitude of an audio signal.
+
+        Parameters:
+        - audio_data: numpy array representing the audio signal.
+
+        Returns:
+        - max_amplitude: maximum amplitude value.
+        """
+        max_amplitude = np.max(np.abs(audio_data))
+        return max_amplitude
+
 
     def select_window(self):
         selected_mode = self.window_comboBox.currentText()

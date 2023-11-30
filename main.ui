@@ -311,7 +311,7 @@ QStatusBar {
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>imgs/preview.png</normaloff>imgs/preview.png</iconset>
+            <normaloff>imgs/play.png</normaloff>imgs/play.png</iconset>
           </property>
          </widget>
         </item>
