@@ -65,7 +65,7 @@ class MainApp(QDialog, FORM_CLASS):
         self.graphicsView2.plot(modified_signal_time.real)
 
     # Function to apply a window to a specific frequency range
-    def apply_window_to_frequency_range(self, freqs, amps, start_freq, end_freq, scale_factor, selected_window='Select window', sampledrate = 200):
+    def apply_window_to_frequency_range(self, freqs, amps,transformed, start_freq, end_freq, scale_factor, selected_window='Select window', sampledrate = 200):
 
         # Find indices corresponding to start and end frequencies
         start_index = np.where(freqs >= start_freq)[0][0]
@@ -89,13 +89,12 @@ class MainApp(QDialog, FORM_CLASS):
             window = 1
             scale_factor = 1
             window_title = "No Window Function"
-
+        
         amps[start_index:end_index + 1] *= window * scale_factor
-        modified_signal_time = self.Inverse_Fourier_Transform(amps)
-        # play modified
-        #print('sampledrate')
-        scipy.io.wavfile.write('music_trash/processed_signal.wav', sampledrate, modified_signal_time.real.astype(np.int16))
 
+        phases = np.angle(transformed)
+        complex_coefficients = amps * np.exp(1j * phases)
+        modified_signal_time = self.Inverse_Fourier_Transform(complex_coefficients)
         return  freqs, amps, modified_signal_time, window_title
 
     def Fourier_Transform_Signal(self,amplitude_signal, sampling_rate):
@@ -111,7 +110,7 @@ class MainApp(QDialog, FORM_CLASS):
         
         sampling_period = 1/sampling_rate
         
-        magnitude_freq_components = rfft(amplitude_signal) / number_of_samples
+        magnitude_freq_components = rfft(amplitude_signal)
         
         frequency_components = rfftfreq(number_of_samples,sampling_period)
         
@@ -157,9 +156,9 @@ class MainApp(QDialog, FORM_CLASS):
         we apply the irfft to get the modified signal in the time domain (reconstruction)
         """
         
-        Amplitude_time_domain = irfft(Magnitude_frequency_components) #Transform the signal back to the time domain.
+        Amplitude_time_domain = irfft(Magnitude_frequency_components).real #Transform the signal back to the time domain.
         
-        return np.real(Amplitude_time_domain)  #ensure the output is real.
+        return np.int16(Amplitude_time_domain)  #ensure the output is real.
 
     def get_max_amplitude(self, audio_data):
         """

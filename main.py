@@ -39,6 +39,11 @@ import time
 #import plotly.graph_objs as go
 #from plotly.offline import iplot
 import scipy.io.wavfile as wav 
+from scipy.signal import spectrogram
+from pyqtgraph import GraphicsLayoutWidget
+import os
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 # Load the UI file and connect it with the Python file
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "main.ui"))
@@ -124,7 +129,17 @@ class MainApp(QMainWindow, FORM_CLASS):
                 element.show()
             else:
                 element.hide()
-
+    def spectrogram(self, data, sampling_rate,widget):
+        _, _, Sxx = spectrogram(data, sampling_rate)
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.imshow(10 * np.log10(Sxx), aspect='auto', cmap='viridis')
+        ax.invert_yaxis()
+        ax.axes.plot()
+        canvas = FigureCanvas(fig)
+        layout = QVBoxLayout()
+        layout.addWidget(canvas)
+        widget.setLayout(layout)
     def handle_sliders(self):
         selected_mode = self.comboBox.currentText()
         num_sliders = self.modes_dict[selected_mode][0]
@@ -144,7 +159,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.graphicsView.clear()
         self.graphicsView_2.clear()
         self.graphicsView_3.clear()
-        self.graphicsView_4.clear()
+       
 
     def add_signal(self):
         """
@@ -153,11 +168,11 @@ class MainApp(QMainWindow, FORM_CLASS):
 
         options = QFileDialog().options()
         options |= QFileDialog.ReadOnly
-        filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV File", "", "WAV Files (*.wav);;All Files ()",
+        self.filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV File", "", "WAV Files (*.wav);;All Files ()",
                                                   options=options)
-        if filepath:
+        if self.filepath:
             self.clear_graphs()
-            self.load_audio_file(filepath)
+            self.load_audio_file(self.filepath)
             self.signal_added = True
             _, _, _ = self.DFT()
 
@@ -179,14 +194,14 @@ class MainApp(QMainWindow, FORM_CLASS):
         Sampling rate
         """
         if path_file_upload is not None:
-            audio_samples,sampling_rate=librosa.load(path_file_upload)
+            sampling_rate , audio_samples= scipy.io.wavfile.read(path_file_upload)
             self.data = audio_samples
             self.sampling_rate = sampling_rate
              # plot the signal
             self.time_a = np.arange(0, len(self.data)) / self.sampling_rate
             self.graphicsView.plot(self.time_a, self.data, pen='r')
             self.graphicsView.setTitle('Time Domain')
-            print('Signal added successfully')
+            self.spectrogram(self.data, self.sampling_rate,self.widget)
 
 
     def proccess_signal(self, slider):
@@ -195,19 +210,19 @@ class MainApp(QMainWindow, FORM_CLASS):
             selected_window = self.window_combo_box.currentText()
             freq, amps, transformed = self.DFT()
             scale_factor = slider.value() / 50
-            #print(self.sampling_rate)
+            
             self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
-                freq, amps, 1, 1000, scale_factor, selected_window, self.sampling_rate)
-            print('proccessed_signal')
-            print(self.proccessed_signal)
-            self.graphicsView_2.plot(self.proccessed_freqs, self.proccessed_amps, pen='r')
-            self.graphicsView_3.plot(self.proccessed_signal.real, pen='r')
-
+                freq, amps,transformed, 1, 1000, scale_factor, selected_window, self.sampling_rate )
+            
+            self.graphicsView_2.plot(self.proccessed_freqs, abs(self.proccessed_amps), pen='r')
+            # self.proccessed_signal = self.proccessed_amps * np.exp(1j * np.angle(transformed[:len(self.proccessed_amps)]))
+            self.graphicsView_3.plot(self.time_a,self.proccessed_signal, pen='r')
+            self.spectrogram(self.proccessed_signal, self.sampling_rate,self.widget_2)
 
 
     def slider_changed(self, slider, slider_index):
         if self.signal_added:
-            print('slider changed')
+            
             self.graphicsView_2.clear()
             selected_mode = self.comboBox.currentText()
             start_freq = self.modes_dict[selected_mode][4][slider_index][0]
@@ -217,31 +232,39 @@ class MainApp(QMainWindow, FORM_CLASS):
             scale_factor = slider.value() / 50
 
             self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
-                freq, amps, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
-            print('proccessed_signal')
-            print(self.proccessed_signal)
+                freq, amps,transformed, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
+            
+             
+            
             self.graphicsView_2.plot(self.proccessed_freqs, self.proccessed_amps, pen='r')
-            self.graphicsView_3.plot(self.proccessed_signal.real, pen='r')
+            
+            # Construct the complex spectrum
+            
+            #self.proccessed_signal = self.proccessed_amps * np.exp(1j * np.angle(transformed[:len(self.proccessed_freqs)]))
+            # Perform the IDFT        
+            self.graphicsView_3.plot(self.time_a,self.proccessed_signal, pen='r')
+            self.spectrogram(self.proccessed_signal, self.sampling_rate,self.widget_2)
+            
 
 
     def DFT(self):
-        transformed, _ = self.m2.Fourier_Transform_Signal(self.data, self.sampling_rate)
+        transformed, xf = self.m2.Fourier_Transform_Signal(self.data, self.sampling_rate)
         self.inversed_data = self.m2.Inverse_Fourier_Transform(transformed)
-        self.graphicsView_4.plot(self.inversed_data.real, pen='r')
+        # self.inversed_data = self.inversed_data * 1000000000
+        
+        
         N = len(self.data)
-        xf = np.linspace(0.0, 0.5 * self.sampling_rate, N // 2)
-        amps = 2.0 / N * np.abs(transformed[:N // 2])
-        self.graphicsView_2.plot(xf, amps, pen='r')
+        self.graphicsView_2.plot(xf,abs(transformed), pen='r')
         # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
         if len(xf) > 10:
             n = len(xf) // 10
             for i in range(10):
                 self.modes_dict['Unifrom Range'][4].append([xf[i * n], xf[(i + 1) * n]])
-            self.proccessed_freqs = xf
-            self.proccessed_amps = amps
-            self.proccessed_signal = transformed
-            print('DFT tmam')
-        return xf, amps, transformed
+            # self.proccessed_freqs = xf
+            # self.proccessed_amps = abs(transformed)
+            # self.proccessed_signal = transformed
+            
+        return xf , abs(transformed),  transformed
 
     def create_temp_wav_file(self):
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
@@ -250,7 +273,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         wav_file_path = temp_file.name
 
         # Normalize the audio data
-        normalized_data = self.normalize_audio(self.inversed_data)
+        normalized_data = self.proccessed_signal
 
         # Write the normalized audio data to the temporary WAV file
         with wave.open(wav_file_path, 'w') as wav_file:
@@ -261,34 +284,14 @@ class MainApp(QMainWindow, FORM_CLASS):
 
         return wav_file_path
 
-    def normalize_audio(self, audio_data):
-        print('audio_data')
-        print(audio_data)
-        # Normalize the audio data to a target maximum amplitude (e.g., 0.8)
-        target_amplitude = 2
-        print('target_amplitude')
-        print(target_amplitude)
-        max_amplitude = np.max(np.abs(audio_data))
-        print('max_amplitude')
-        print(max_amplitude)
-
-        if max_amplitude > 0:
-            normalization_factor = target_amplitude / max_amplitude
-            normalized_data = (audio_data * normalization_factor).astype(np.int16)
-            print('normalized_data')
-            print(normalized_data)
-            return normalized_data
-        else:
-            return audio_data
-
-    #play self.inversed_data using QMediaPlayer
+    
     def toggle_playback(self):
         if self.signal_added:
             if self.media_player.mediaStatus() == QMediaPlayer.NoMedia:
                 # Set media content if not already set
                 signal_choosen = self.signal_choosen.currentText()
                 if signal_choosen == 'Original Signal':
-                    self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile('eleph.wav')))
+                    self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(self.filepath)))
                 else:
                     self.temp_wav_file = self.create_temp_wav_file()
                     self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(self.temp_wav_file)))
