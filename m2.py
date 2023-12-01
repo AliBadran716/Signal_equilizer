@@ -47,6 +47,7 @@ class MainApp(QDialog, FORM_CLASS):
         self.parameter_slider.valueChanged.connect(self.visualize_window)
 
     def visualize_window(self):
+        
         selected_window = self.window_comboBox.currentText()
         freqs, amps = self.get_frequency_amplitude(self.signal)
         scale_factor =  self.parameter_slider.value() / 50
@@ -62,7 +63,7 @@ class MainApp(QDialog, FORM_CLASS):
         self.graphicsView2.setTitle('Time Domain')
         self.graphicsView2.setLabel('left', 'Amplitude')
         self.graphicsView2.setLabel('bottom', 'Time')
-        self.graphicsView2.plot(modified_signal_time.real)
+        self.graphicsView2.plot(abs(modified_signal_time))
 
     # Function to apply a window to a specific frequency range
     def apply_window_to_frequency_range(self, freqs, amps,transformed, start_freq, end_freq, scale_factor, selected_window='Select window', sampledrate = 200):
@@ -88,7 +89,7 @@ class MainApp(QDialog, FORM_CLASS):
             scale_factor = 1
             window_title = "No Window Function"
         
-        amps[start_index:end_index + 1] *= window * scale_factor *10
+        amps[start_index:end_index + 1] *= window * scale_factor 
 
         phases = np.angle(transformed)
         complex_coefficients = amps * np.exp(1j * phases)
