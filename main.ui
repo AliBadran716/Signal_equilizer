@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1190</width>
-    <height>745</height>
+    <width>1100</width>
+    <height>856</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -387,12 +387,12 @@ QStatusBar {
           </item>
           <item>
            <property name="text">
-            <string>x0.5</string>
+            <string>x1</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>x1</string>
+            <string>x1.25</string>
            </property>
           </item>
           <item>
@@ -550,6 +550,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_1">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>1</string>
             </property>
@@ -557,6 +563,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_1">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -577,6 +589,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>2</string>
             </property>
@@ -584,6 +602,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -604,6 +628,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_3">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>3</string>
             </property>
@@ -611,6 +641,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_3">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -631,6 +667,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_4">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>4</string>
             </property>
@@ -638,6 +680,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_4">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="maximum">
              <number>100</number>
             </property>
@@ -655,6 +703,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_5">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>5</string>
             </property>
@@ -662,6 +716,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_5">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -682,6 +742,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_6">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>6</string>
             </property>
@@ -689,6 +755,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_6">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -709,6 +781,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_7">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_7">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>7</string>
             </property>
@@ -716,6 +794,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_7">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -736,6 +820,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_8">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_8">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>8</string>
             </property>
@@ -743,6 +833,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_8">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -763,6 +859,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_9">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_9">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>9</string>
             </property>
@@ -770,6 +872,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_9">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -790,6 +898,12 @@ QStatusBar {
          <layout class="QVBoxLayout" name="verticalLayout_10">
           <item alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_10">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>10</string>
             </property>
@@ -797,6 +911,12 @@ QStatusBar {
           </item>
           <item alignment="Qt::AlignHCenter">
            <widget class="QSlider" name="verticalSlider_10">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimum">
              <number>1</number>
             </property>
@@ -824,8 +944,8 @@ QStatusBar {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1190</width>
-     <height>24</height>
+     <width>1100</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

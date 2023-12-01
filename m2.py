@@ -88,7 +88,7 @@ class MainApp(QDialog, FORM_CLASS):
             scale_factor = 1
             window_title = "No Window Function"
         
-        amps[start_index:end_index + 1] *= window * scale_factor
+        amps[start_index:end_index + 1] *= window * scale_factor *10
 
         phases = np.angle(transformed)
         complex_coefficients = amps * np.exp(1j * phases)

@@ -82,6 +82,12 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.handel_buttons()
         from m2 import MainApp as m2
         self.m2 = m2()
+        self.graphicsView.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.graphicsView.setMinimumSize(200, 200)
+        self.graphicsView_2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.graphicsView_2.setMinimumSize(200, 200)
+        self.graphicsView_3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.graphicsView_3.setMinimumSize(200, 200)
 
     def handel_buttons(self):
         self.actionOpen.triggered.connect(self.add_signal)
@@ -109,6 +115,7 @@ class MainApp(QMainWindow, FORM_CLASS):
     def spectrogram(self, data, sampling_rate,widget):
         _, _, Sxx = spectrogram(data, sampling_rate)
         fig = Figure()
+        fig = Figure(figsize=(3,3))
         ax = fig.add_subplot(111)
         ax.imshow(10 * np.log10(Sxx), aspect='auto', cmap='viridis')
         ax.invert_yaxis()
