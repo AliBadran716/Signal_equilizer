@@ -196,6 +196,9 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.graphicsView.setTitle('Time Domain')
             self.spectrogram(self.data, self.sampling_rate,self.widget)
             self.proccessed_freqs, self.proccessed_amps, transformed = self.DFT()
+            self.proccessed_signal = self.data  # Default to the original signal
+            self.graphicsView_3.plot(self.time_a, self.proccessed_signal, pen='r')
+            self.spectrogram(self.proccessed_signal, self.sampling_rate, self.widget_2)
             # self.spectrogram(amps, self.sampling_rate ,self.widget_2)
             # self.graphicsView_3.plot(self.time_a ,self.proccessed_signal, pen='r')
             # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
