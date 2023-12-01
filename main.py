@@ -74,6 +74,7 @@ class MainApp(QMainWindow, FORM_CLASS):
                                self.label_7, self.label_8, self.label_9, self.label_10]
         self.proccessed_freqs = None
         self.proccessed_amps = None
+        self.transformed_signal = None
         self.proccessed_signal = None
         self.signal_added = False
         self.zoom_counter = 0
@@ -186,21 +187,16 @@ class MainApp(QMainWindow, FORM_CLASS):
             sampling_rate , audio_samples= scipy.io.wavfile.read(path_file_upload)
             self.data = audio_samples
             self.sampling_rate = sampling_rate
-             # plot the signal
-            print(self.data.shape)
             if (len(self.data.shape) > 1):
                 self.data = self.data[:,0]
             self.time_a = np.arange(0, len(self.data)) / self.sampling_rate
-            print(self.time_a.shape)
             self.graphicsView.plot(self.time_a, self.data, pen='r')
             self.graphicsView.setTitle('Time Domain')
             self.spectrogram(self.data, self.sampling_rate,self.widget)
-            self.proccessed_freqs, self.proccessed_amps, transformed = self.DFT()
+            self.proccessed_freqs, self.proccessed_amps, self.transformed_signal = self.DFT()
             self.proccessed_signal = self.data  # Default to the original signal
             self.graphicsView_3.plot(self.time_a, self.proccessed_signal, pen='r')
             self.spectrogram(self.proccessed_signal, self.sampling_rate, self.widget_2)
-            # self.spectrogram(amps, self.sampling_rate ,self.widget_2)
-            # self.graphicsView_3.plot(self.time_a ,self.proccessed_signal, pen='r')
             # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
             if len(self.proccessed_freqs) > 10:
                 n = len(self.proccessed_freqs) // 10
@@ -212,11 +208,10 @@ class MainApp(QMainWindow, FORM_CLASS):
         if self.signal_added:
             self.graphicsView_2.clear()
             selected_window = self.window_combo_box.currentText()
-            freq, amps, transformed = self.DFT()
             scale_factor = slider.value() / 50
             self.graphicsView_2.clear()
             self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
-                self.proccessed_freqs, self.proccessed_amps, transformed, 1, 1000, scale_factor, selected_window, self.sampling_rate )
+                self.proccessed_freqs, self.proccessed_amps, self.transformed_signal, 1, 1000, scale_factor, selected_window, self.sampling_rate )
             
             self.graphicsView_2.plot(self.proccessed_freqs, abs(self.proccessed_amps), pen='r')
             # Construct the complex spectrum
@@ -231,11 +226,10 @@ class MainApp(QMainWindow, FORM_CLASS):
             start_freq = self.modes_dict[selected_mode][4][slider_index][0]
             end_freq = self.modes_dict[selected_mode][4][slider_index][1]
             selected_window = self.window_combo_box.currentText()
-            freq, amps, transformed = self.DFT()
             scale_factor = slider.value() / 50
             self.graphicsView_2.clear()
             self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
-                self.proccessed_freqs,self.proccessed_amps ,transformed, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
+                self.proccessed_freqs,self.proccessed_amps ,self.transformed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
             
             self.graphicsView_2.plot(self.proccessed_freqs, self.proccessed_amps, pen='r')
             # Construct the complex spectrum      
