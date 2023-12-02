@@ -51,19 +51,20 @@ class MainApp(QDialog, FORM_CLASS):
         selected_window = self.window_comboBox.currentText()
         freqs, amps = self.get_frequency_amplitude(self.signal)
         scale_factor =  self.parameter_slider.value() / 50
-        freqs, amps, modified_signal_time, window_title = self.apply_window_to_frequency_range( freqs, amps, 20, 40, scale_factor, selected_window)
+        # freqs, amps, modified_signal_time, window_title = self.apply_window_to_frequency_range( freqs, amps, 20, 40, scale_factor, selected_window)
+        #
+        # self.graphicsView.clear()
+        # self.graphicsView2.clear()
+        # self.graphicsView.plot(freqs, amps, pen='b')0
+        # # set label and title
+        # self.graphicsView.setTitle(window_title)
+        # self.graphicsView.setLabel('left', 'Amplitude')
+        # self.graphicsView.setLabel('bottom', 'Frequency')
+        # self.graphicsView2.setTitle('Time Domain')
+        # self.graphicsView2.setLabel('left', 'Amplitude')
+        # self.graphicsView2.setLabel('bottom', 'Time')
+        # self.graphicsView2.plot(abs(modified_signal_time))
 
-        self.graphicsView.clear()
-        self.graphicsView2.clear()
-        self.graphicsView.plot(freqs, amps, pen='b')
-        # set label and title
-        self.graphicsView.setTitle(window_title)
-        self.graphicsView.setLabel('left', 'Amplitude')
-        self.graphicsView.setLabel('bottom', 'Frequency')
-        self.graphicsView2.setTitle('Time Domain')
-        self.graphicsView2.setLabel('left', 'Amplitude')
-        self.graphicsView2.setLabel('bottom', 'Time')
-        self.graphicsView2.plot(abs(modified_signal_time))
 
     # Function to apply a window to a specific frequency range
     def apply_window_to_frequency_range(self, freqs, amps,transformed, start_freq, end_freq, scale_factor, selected_window='Select window', sampledrate = 200):
@@ -71,9 +72,8 @@ class MainApp(QDialog, FORM_CLASS):
         # Find indices corresponding to start and end frequencies
         start_index = np.where(freqs >= start_freq)[0][0]
         end_index = np.where(freqs <= end_freq)[0][-1]
-        # print(start_index)
-        # print(end_index)
-        # print(freqs.shape)
+        freqs_in_range = freqs[start_index:end_index + 1]
+
         # Apply the window function to the specific frequency range in the time domain
         if selected_window == "Hamming":
             window = self.hamming_window(end_index - start_index + 1)
@@ -91,8 +91,7 @@ class MainApp(QDialog, FORM_CLASS):
             window = 1
             scale_factor = 1
             window_title = "No Window Function"
-        
-        amps[start_index:end_index + 1] *= window * scale_factor 
+        amps[start_index:end_index + 1] *= window * scale_factor
 
         phases = np.angle(transformed)
         complex_coefficients = amps * np.exp(1j * phases)
@@ -124,26 +123,21 @@ class MainApp(QDialog, FORM_CLASS):
 
         # Compute magnitude frequency components
         magnitude_freq_components = np.abs(rfft(amplitude_signal))
-        print('magnitude_freq_components')
-        print(magnitude_freq_components)
 
         # Exclude the zero frequency component
         magnitude_freq_components[0] = 0
 
         # Compute frequency components
         frequency_components = rfftfreq(number_of_samples, sampling_period)
-        print('frequency_components')
-        print(frequency_components)
+
 
         # Find the index of the maximum magnitude
         max_magnitude_index = np.argmax(magnitude_freq_components)
-        print('max_magnitude_index')
-        print(max_magnitude_index)
+
 
         # Find the corresponding frequency
         max_frequency = frequency_components[max_magnitude_index]
-        print('max_frequency')
-        print(max_frequency)
+
 
         return max_frequency
 

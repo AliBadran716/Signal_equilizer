@@ -50,25 +50,29 @@ class MainApp(QMainWindow, FORM_CLASS):
                                    self.verticalSlider_5, self.verticalSlider_6, self.verticalSlider_7,
                                    self.verticalSlider_8, self.verticalSlider_9, self.verticalSlider_10],
                               ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], True,
-                              []],
+                              []
+                              ],
             'Musical Instruments': [4,
                                     [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                      self.verticalSlider_4],
                                     ["Piano", "Guitar", "Violin", "Trumpet"], False,
                                     # frequency ranges
-                                    [[0, 1000], [1000, 2000], [2000, 3000], [3000, 4000]]],
+                                    [[2000, 4000], [64, 2000], [1000, 3000], [256, 2500]]
+                                    ],
             'Animal Sounds': [4,
                               [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                self.verticalSlider_4],
                               ["Lion", "Monkey", "Bird", "Elephant"], False,
                               #  frequency ranges
-                              [[0, 1000], [1000, 2000], [2000, 3000], [3000, 4000]]],
+                              [[3000, 4000], [4000, 4200], [6000, 7000], [14000, 16000-1]]
+                              ],
             'ECG Abnormalities': [4,
                                   [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                    self.verticalSlider_4],
                                   ["PVC", "PAC", "LBBB", "RBBB"], False,
                                   #  frequency ranges
-                                  [[0, 1000], [1000, 2000], [2000, 3000], [3000, 4000]]],
+                                  [[0, 1000], [1000, 2000], [2000, 3000], [3000, 4000]]
+                                  ],
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
                                self.label_7, self.label_8, self.label_9, self.label_10]
@@ -192,6 +196,7 @@ class MainApp(QMainWindow, FORM_CLASS):
             if (len(self.original_signal.shape) > 1):
                 self.original_signal = self.original_signal[:,0]
             self.time_a = np.arange(0, len(self.original_signal)) / self.sampling_rate
+            self.time_a_processed= np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
             self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
             self.graphicsView.setTitle('Time Domain')
             self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
@@ -206,18 +211,17 @@ class MainApp(QMainWindow, FORM_CLASS):
                 for i in range(10):
                     self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[(i + 1) * n]])
 
-    def dynamic_plot(self, signal, graphicsView):
+    def dynamic_plot(self, signal,time, graphicsView):
         self.end_indx = 0
         self.timer_1 = QTimer()
         self.timer_1.setInterval(45)
-        self.timer_1.timeout.connect(functools.partial(self.update_plot_data_1, signal, graphicsView))
+        self.timer_1.timeout.connect(functools.partial(self.update_plot_data_1, signal, time,graphicsView))
         self.timer_1.start()
 
 
-    def update_plot_data_1(self,signal, graphicsView):
+    def update_plot_data_1(self,signal,time, graphicsView):
         if self.signal_added:
             # chunk_size = len(self.original_signal) // 100  # Adjust the chunk size as needed
-            print(3)
             chunk_size = int((len(signal) * 50 * 10 ** -3) / self.time_a[-1])
             start_indx = self.end_indx
             end_indx = min(start_indx + chunk_size, len(signal))
@@ -227,7 +231,7 @@ class MainApp(QMainWindow, FORM_CLASS):
                 self.end_indx = len(signal)
                 self.timer_1.stop()
                 graphicsView.clear()
-                graphicsView.plot(self.time_a, signal, pen='r')
+                graphicsView.plot(time, signal, pen='r')
 
     def slider_changed(self, slider):
         if self.signal_added:
@@ -242,15 +246,17 @@ class MainApp(QMainWindow, FORM_CLASS):
                 end_freq = self.modes_dict[selected_mode][4][i][1]
                 selected_window = self.window_combo_box.currentText()
                 scale_factor = sliders_values[i] / 50
-
                 processed_freqs, processed_amps, processed_signal, window_title = self.m2.apply_window_to_frequency_range(
                 processed_freqs, processed_amps, processed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
+
             self.clear_media_player()
             self.graphicsView_2.clear()
             self.graphicsView_2.plot(processed_freqs, processed_amps, pen='r')
             # Construct the complex spectrum
-            self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)  
-            self.graphicsView_3.plot(self.time_a, self.processed_time_signal, pen='r')
+            self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)
+            #make len of self.time_a equal to len of self.processed_time_signal
+            self.time_a_processed = np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
+            self.graphicsView_3.plot(self.time_a_processed, self.processed_time_signal, pen='r')
             self.spectrogram(processed_signal, self.sampling_rate,self.widget_2)
 
  
@@ -285,13 +291,14 @@ class MainApp(QMainWindow, FORM_CLASS):
             signal_choosen = self.signal_choosen.currentText()
             if signal_choosen == 'Original Signal':
                 signal = self.original_signal
+                time = self.time_a
                 graphicsView = self.graphicsView
 
             else:
                 signal = self.processed_time_signal
+                time= self.time_a_processed
                 graphicsView = self.graphicsView_3
-            print(2)
-            self.dynamic_plot(signal, graphicsView)
+            self.dynamic_plot(signal,time, graphicsView)
 
             if self.media_player.mediaStatus() == QMediaPlayer.NoMedia:
                 # Set media content if not already set
