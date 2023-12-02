@@ -80,6 +80,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.processed_time_signal = None
         self.signal_added = False
         self.zoom_counter = 0
+        self.end_indx = 0
         # Initialize a QMediaPlayer instance
         self.media_player = QMediaPlayer()
         self.handel_buttons()
@@ -117,7 +118,6 @@ class MainApp(QMainWindow, FORM_CLASS):
     def spectrogram(self, data, sampling_rate,widget):
         
         _, _, Sxx = spectrogram(data, sampling_rate)
-        #print(Sxx.shape)
         time_axis = np.linspace(0, len(data) / sampling_rate, num=Sxx.shape[1])
         fig = Figure()
         fig = Figure(figsize=(3,3))
@@ -187,6 +187,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         if path_file_upload is not None:
             sampling_rate , audio_samples= scipy.io.wavfile.read(path_file_upload)
             self.original_signal = audio_samples
+            self.processed_time_signal = audio_samples
             self.sampling_rate = sampling_rate
             if (len(self.original_signal.shape) > 1):
                 self.original_signal = self.original_signal[:,0]
@@ -204,22 +205,29 @@ class MainApp(QMainWindow, FORM_CLASS):
                 n = len(self.signal_freqs) // 10
                 for i in range(10):
                     self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[(i + 1) * n]])
-            
 
-    # def proccess_signal(self, slider):
-    #     if self.signal_added:
-    #         self.graphicsView_2.clear()
-    #         selected_window = self.window_combo_box.currentText()
-    #         scale_factor = slider.value() / 50
-    #         self.graphicsView_2.clear()
-    #         self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
-    #             self.proccessed_freqs, self.proccessed_amps, self.transformed_signal, 1, 1000, scale_factor, selected_window, self.sampling_rate )
-            
-    #         self.graphicsView_2.plot(self.proccessed_freqs, abs(self.proccessed_amps), pen='r')
-    #         # Construct the complex spectrum
-    #         self.graphicsView_3.plot(self.time_a ,self.proccessed_signal, pen='r')
-    #         self.spectrogram(self.proccessed_signal, self.sampling_rate ,self.widget_2)
+    def dynamic_plot(self, signal, graphicsView):
+        self.end_indx = 0
+        self.timer_1 = QTimer()
+        self.timer_1.setInterval(45)
+        self.timer_1.timeout.connect(functools.partial(self.update_plot_data_1, signal, graphicsView))
+        self.timer_1.start()
 
+
+    def update_plot_data_1(self,signal, graphicsView):
+        if self.signal_added:
+            # chunk_size = len(self.original_signal) // 100  # Adjust the chunk size as needed
+            print(3)
+            chunk_size = int((len(signal) * 50 * 10 ** -3) / self.time_a[-1])
+            start_indx = self.end_indx
+            end_indx = min(start_indx + chunk_size, len(signal))
+            graphicsView.plot(self.time_a[start_indx:end_indx],signal[start_indx:end_indx], pen='b')
+            self.end_indx = end_indx
+            if self.end_indx >= len(signal):
+                self.end_indx = len(signal)
+                self.timer_1.stop()
+                graphicsView.clear()
+                graphicsView.plot(self.time_a, signal, pen='r')
 
     def slider_changed(self, slider):
         if self.signal_added:
@@ -234,13 +242,13 @@ class MainApp(QMainWindow, FORM_CLASS):
                 end_freq = self.modes_dict[selected_mode][4][i][1]
                 selected_window = self.window_combo_box.currentText()
                 scale_factor = sliders_values[i] / 50
-                # print(scale_factor)
+
                 processed_freqs, processed_amps, processed_signal, window_title = self.m2.apply_window_to_frequency_range(
                 processed_freqs, processed_amps, processed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
             self.clear_media_player()
             self.graphicsView_2.clear()
             self.graphicsView_2.plot(processed_freqs, processed_amps, pen='r')
-                # Construct the complex spectrum    
+            # Construct the complex spectrum
             self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)  
             self.graphicsView_3.plot(self.time_a, self.processed_time_signal, pen='r')
             self.spectrogram(processed_signal, self.sampling_rate,self.widget_2)
@@ -251,7 +259,6 @@ class MainApp(QMainWindow, FORM_CLASS):
         for i in range(num_sliders):
             slider = getattr(self, f"verticalSlider_{i + 1}")
             sliders_values.append(slider.value())
-            #print(sliders_values)
         return sliders_values
 
     def DFT(self):
@@ -264,20 +271,28 @@ class MainApp(QMainWindow, FORM_CLASS):
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         temp_file.close()
         wav_file_path = temp_file.name
-        # Normalize the audio data
-        normalized_data = self.processed_time_signal
-        # print(normalized_data)
-        # Write the normalized audio data to the temporary WAV file
         with wave.open(wav_file_path, 'w') as wav_file:
             wav_file.setnchannels(1)  # Mono audio
             wav_file.setsampwidth(2)  # 16-bit audio
             wav_file.setframerate(44100)  # Sample rate
-            wav_file.writeframes(normalized_data.tobytes())
+            wav_file.writeframes(self.processed_time_signal.tobytes())
         return wav_file_path
 
     
     def toggle_playback(self):
         if self.signal_added:
+
+            signal_choosen = self.signal_choosen.currentText()
+            if signal_choosen == 'Original Signal':
+                signal = self.original_signal
+                graphicsView = self.graphicsView
+
+            else:
+                signal = self.processed_time_signal
+                graphicsView = self.graphicsView_3
+            print(2)
+            self.dynamic_plot(signal, graphicsView)
+
             if self.media_player.mediaStatus() == QMediaPlayer.NoMedia:
                 # Set media content if not already set
                 signal_choosen = self.signal_choosen.currentText()
@@ -289,6 +304,7 @@ class MainApp(QMainWindow, FORM_CLASS):
             if self.media_player.state() == QMediaPlayer.PlayingState:
                 self.media_player.pause()
             else:
+
                 self.media_player.play()
         else:
             self.add_signal()

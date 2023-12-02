@@ -220,7 +220,7 @@ class MainApp(QDialog, FORM_CLASS):
     def hanning_window(self, window_size):
         return np.hanning(window_size)
 
-    def gaussian_window(self, window_size, sigma=1):
+    def gaussian_window(self, window_size, sigma=1000):
         return np.exp(-0.5 * ((np.arange(window_size) - (window_size - 1) / 2) / sigma) ** 2)
 
     def adjust_window_size(self, window, signal):
