@@ -55,23 +55,23 @@ class MainApp(QMainWindow, FORM_CLASS):
             'Musical Instruments': [4,
                                     [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                      self.verticalSlider_4],
-                                    ["Piano", "Guitar", "Violin", "Trumpet"], False,
+                                    ["Violin", "Trumpet", "Xylo", "Triangle"], False,
                                     # frequency ranges
-                                    [[2000, 4000], [64, 2000], [1000, 3000], [256, 2500]]
+                                    [[0, 1000], [1000, 2000], [2000, 3000], [4000, 5000]]
                                     ],
             'Animal Sounds': [4,
                               [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                self.verticalSlider_4],
                               ["Lion", "Monkey", "Bird", "Elephant"], False,
                               #  frequency ranges
-                              [[3000, 4000], [4000, 4200], [6000, 7000], [14000, 16000-1]]
+                              [[3000, 4000], [190, 1190], [6000, 7000], [590, 830]]
                               ],
             'ECG Abnormalities': [4,
                                   [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                    self.verticalSlider_4],
-                                  ["PVC", "PAC", "LBBB", "RBBB"], False,
+                                  ["Atrial Trachycardia", "Atrial Flutter", "Atrial Fibrillation", "Normal"], False,
                                   #  frequency ranges
-                                  [[0, 1000], [1000, 2000], [2000, 3000], [3000, 4000]]
+                                  [[200, 300], [300, 400], [550, 650], [650,1000]]
                                   ],
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
@@ -235,7 +235,6 @@ class MainApp(QMainWindow, FORM_CLASS):
 
     def slider_changed(self, slider):
         if self.signal_added:
-            # self.graphicsView_2.clear()
             selected_mode = self.comboBox.currentText()
             num_sliders = self.modes_dict[selected_mode][0]
             sliders_values = self.get_sliders_values(num_sliders)
@@ -251,13 +250,14 @@ class MainApp(QMainWindow, FORM_CLASS):
 
             self.clear_media_player()
             self.graphicsView_2.clear()
+            self.graphicsView_3.clear()
             self.graphicsView_2.plot(processed_freqs, processed_amps, pen='r')
             # Construct the complex spectrum
             self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)
             #make len of self.time_a equal to len of self.processed_time_signal
             self.time_a_processed = np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
             self.graphicsView_3.plot(self.time_a_processed, self.processed_time_signal, pen='r')
-            self.spectrogram(processed_signal, self.sampling_rate,self.widget_2)
+            self.spectrogram(self.processed_time_signal, self.sampling_rate, self.widget_2)
 
  
     def get_sliders_values(self, num_sliders):
@@ -381,6 +381,48 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.media_player.setPlaybackRate(1.75)
         elif speed == 'x2':
             self.media_player.setPlaybackRate(2)
+
+    def getindex(self, freq_Hz):
+        f_max = self.m2.Get_Max_Frequency(self.original_signal, self.sampling_rate)
+        signal = self.original_signal
+        return freq_Hz / f_max * len(signal)
+
+    def split_arrhythmia(self, ecg_freq):
+        """
+            separate arithmia components
+            Parameters
+            ----------
+            ecg_freq : array of complex
+                arrithmia and normal components
+            Return
+            ----------
+            f_arrhythmia : array of complex
+            f_normal : array of complex
+        """
+        artial_trachycardia = [0] * len(ecg_freq)
+        artial_flutter = [0] * len(ecg_freq)
+        artial_fibrillation = [0] * len(ecg_freq)
+
+        trachycardia = self.getindex(250)
+
+        flutter = self.getindex(350)
+
+        fibrillation = self.getindex(600)
+
+        # 230
+        artial_trachycardia[trachycardia - 50:trachycardia + 50] = ecg_freq[
+                                                                   trachycardia - 50:trachycardia + 50] * np.hanning(
+            100)
+        # 300
+        artial_flutter[flutter - 50:flutter + 50] = ecg_freq[flutter - 50:flutter + 50] * np.hanning(350 - 250)
+        # 350
+        artial_fibrillation[fibrillation - 50:fibrillation + 50] = ecg_freq[
+                                                                   fibrillation - 50:fibrillation + 50] * np.hanning(
+            360 - 350)
+
+        f_normal = ecg_freq - artial_trachycardia - artial_flutter - artial_fibrillation
+
+        return artial_trachycardia, artial_flutter, artial_fibrillation,f_normal
 
 def main():  # method to start app
     app = QApplication(sys.argv)

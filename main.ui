@@ -306,7 +306,7 @@ QStatusBar {
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
              <number>100</number>
@@ -345,7 +345,7 @@ QStatusBar {
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
              <number>100</number>
@@ -384,7 +384,7 @@ QStatusBar {
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
              <number>100</number>
@@ -459,7 +459,7 @@ QStatusBar {
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
              <number>100</number>
@@ -498,7 +498,7 @@ QStatusBar {
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
              <number>100</number>
@@ -537,7 +537,7 @@ QStatusBar {
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
              <number>100</number>
@@ -576,7 +576,7 @@ QStatusBar {
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
              <number>100</number>
@@ -615,7 +615,7 @@ QStatusBar {
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
              <number>100</number>
@@ -960,7 +960,7 @@ QStatusBar {
      <x>0</x>
      <y>0</y>
      <width>1140</width>
-     <height>23</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
