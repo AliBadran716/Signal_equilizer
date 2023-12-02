@@ -72,10 +72,12 @@ class MainApp(QMainWindow, FORM_CLASS):
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
                                self.label_7, self.label_8, self.label_9, self.label_10]
-        self.proccessed_freqs = None
-        self.proccessed_amps = None
+        self.signal_freqs = None
+        self.signal_amps = None
         self.transformed_signal = None
-        self.proccessed_signal = None
+        self.original_signal = None
+        self.sampling_rate = None
+        self.processed_time_signal = None
         self.signal_added = False
         self.zoom_counter = 0
         # Initialize a QMediaPlayer instance
@@ -102,11 +104,10 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.zoom_in_push_btn.clicked.connect(self.zoom_in)
         self.rewind_push_btn.clicked.connect(self.rewind_signal)
         slider = self.verticalSlider_1
-        self.window_combo_box.currentIndexChanged.connect(functools.partial(self.proccess_signal, slider))
+        self.window_combo_box.currentIndexChanged.connect(functools.partial(self.slider_changed, slider))
         for i in range(10):
             slider = getattr(self, f"verticalSlider_{i + 1}")
-            slider.valueChanged.connect(functools.partial(self.slider_changed, slider, i))
-
+            slider.valueChanged.connect(functools.partial(self.slider_changed, slider))
     def showElements(self, elements, show=True):
         for element in elements:
             if show:
@@ -116,7 +117,7 @@ class MainApp(QMainWindow, FORM_CLASS):
     def spectrogram(self, data, sampling_rate,widget):
         
         _, _, Sxx = spectrogram(data, sampling_rate)
-        print(Sxx.shape)
+        #print(Sxx.shape)
         time_axis = np.linspace(0, len(data) / sampling_rate, num=Sxx.shape[1])
         fig = Figure()
         fig = Figure(figsize=(3,3))
@@ -185,60 +186,76 @@ class MainApp(QMainWindow, FORM_CLASS):
         """
         if path_file_upload is not None:
             sampling_rate , audio_samples= scipy.io.wavfile.read(path_file_upload)
-            self.data = audio_samples
+            self.original_signal = audio_samples
             self.sampling_rate = sampling_rate
-            if (len(self.data.shape) > 1):
-                self.data = self.data[:,0]
-            self.time_a = np.arange(0, len(self.data)) / self.sampling_rate
-            self.graphicsView.plot(self.time_a, self.data, pen='r')
+            if (len(self.original_signal.shape) > 1):
+                self.original_signal = self.original_signal[:,0]
+            self.time_a = np.arange(0, len(self.original_signal)) / self.sampling_rate
+            self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
             self.graphicsView.setTitle('Time Domain')
-            self.spectrogram(self.data, self.sampling_rate,self.widget)
-            self.proccessed_freqs, self.proccessed_amps, self.transformed_signal = self.DFT()
-            self.proccessed_signal = self.data  # Default to the original signal
-            self.graphicsView_3.plot(self.time_a, self.proccessed_signal, pen='r')
-            self.spectrogram(self.proccessed_signal, self.sampling_rate, self.widget_2)
+            self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
+            
+            self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
+            
+            self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
+            self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
             # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
-            if len(self.proccessed_freqs) > 10:
-                n = len(self.proccessed_freqs) // 10
+            if len(self.signal_freqs) > 10:
+                n = len(self.signal_freqs) // 10
                 for i in range(10):
-                    self.modes_dict['Unifrom Range'][4].append([self.proccessed_freqs[i * n], self.proccessed_freqs[(i + 1) * n]])
+                    self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[(i + 1) * n]])
             
 
-    def proccess_signal(self, slider):
-        if self.signal_added:
-            self.graphicsView_2.clear()
-            selected_window = self.window_combo_box.currentText()
-            scale_factor = slider.value() / 50
-            self.graphicsView_2.clear()
-            self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
-                self.proccessed_freqs, self.proccessed_amps, self.transformed_signal, 1, 1000, scale_factor, selected_window, self.sampling_rate )
+    # def proccess_signal(self, slider):
+    #     if self.signal_added:
+    #         self.graphicsView_2.clear()
+    #         selected_window = self.window_combo_box.currentText()
+    #         scale_factor = slider.value() / 50
+    #         self.graphicsView_2.clear()
+    #         self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
+    #             self.proccessed_freqs, self.proccessed_amps, self.transformed_signal, 1, 1000, scale_factor, selected_window, self.sampling_rate )
             
-            self.graphicsView_2.plot(self.proccessed_freqs, abs(self.proccessed_amps), pen='r')
-            # Construct the complex spectrum
-            self.graphicsView_3.plot(self.time_a ,self.proccessed_signal, pen='r')
-            self.spectrogram(self.proccessed_signal, self.sampling_rate ,self.widget_2)
+    #         self.graphicsView_2.plot(self.proccessed_freqs, abs(self.proccessed_amps), pen='r')
+    #         # Construct the complex spectrum
+    #         self.graphicsView_3.plot(self.time_a ,self.proccessed_signal, pen='r')
+    #         self.spectrogram(self.proccessed_signal, self.sampling_rate ,self.widget_2)
 
 
-    def slider_changed(self, slider, slider_index):
+    def slider_changed(self, slider):
         if self.signal_added:
-            self.graphicsView_2.clear()
+            # self.graphicsView_2.clear()
             selected_mode = self.comboBox.currentText()
-            start_freq = self.modes_dict[selected_mode][4][slider_index][0]
-            end_freq = self.modes_dict[selected_mode][4][slider_index][1]
-            selected_window = self.window_combo_box.currentText()
-            scale_factor = slider.value() / 50
+            num_sliders = self.modes_dict[selected_mode][0]
+            sliders_values = self.get_sliders_values(num_sliders)
+            #sliders_scale_factors = sliders_values // 50
+            processed_freqs, processed_amps, processed_signal = self.DFT()
+            for i in range(num_sliders):
+                start_freq = self.modes_dict[selected_mode][4][i][0]
+                end_freq = self.modes_dict[selected_mode][4][i][1]
+                selected_window = self.window_combo_box.currentText()
+                scale_factor = sliders_values[i] / 50
+                # print(scale_factor)
+                processed_freqs, processed_amps, processed_signal, window_title = self.m2.apply_window_to_frequency_range(
+                processed_freqs, processed_amps, processed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
+            self.clear_media_player()
             self.graphicsView_2.clear()
-            self.proccessed_freqs, self.proccessed_amps, self.proccessed_signal, window_title = self.m2.apply_window_to_frequency_range(
-                self.proccessed_freqs,self.proccessed_amps ,self.transformed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
-            
-            self.graphicsView_2.plot(self.proccessed_freqs, self.proccessed_amps, pen='r')
-            # Construct the complex spectrum      
-            self.graphicsView_3.plot(self.time_a,self.proccessed_signal, pen='r')
-            self.spectrogram(self.proccessed_signal, self.sampling_rate,self.widget_2)
-            
+            self.graphicsView_2.plot(processed_freqs, processed_amps, pen='r')
+                # Construct the complex spectrum    
+            self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)  
+            self.graphicsView_3.plot(self.time_a, self.processed_time_signal, pen='r')
+            self.spectrogram(processed_signal, self.sampling_rate,self.widget_2)
+
+ 
+    def get_sliders_values(self, num_sliders):
+        sliders_values = []
+        for i in range(num_sliders):
+            slider = getattr(self, f"verticalSlider_{i + 1}")
+            sliders_values.append(slider.value())
+            #print(sliders_values)
+        return sliders_values
 
     def DFT(self):
-        transformed, xf = self.m2.Fourier_Transform_Signal(self.data, self.sampling_rate)
+        transformed, xf = self.m2.Fourier_Transform_Signal(self.original_signal, self.sampling_rate)
         self.graphicsView_2.plot(xf,abs(transformed), pen='r')
         
         return xf, abs(transformed), transformed
@@ -248,7 +265,8 @@ class MainApp(QMainWindow, FORM_CLASS):
         temp_file.close()
         wav_file_path = temp_file.name
         # Normalize the audio data
-        normalized_data = self.proccessed_signal
+        normalized_data = self.processed_time_signal
+        # print(normalized_data)
         # Write the normalized audio data to the temporary WAV file
         with wave.open(wav_file_path, 'w') as wav_file:
             wav_file.setnchannels(1)  # Mono audio

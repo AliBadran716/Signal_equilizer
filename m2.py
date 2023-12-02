@@ -71,6 +71,9 @@ class MainApp(QDialog, FORM_CLASS):
         # Find indices corresponding to start and end frequencies
         start_index = np.where(freqs >= start_freq)[0][0]
         end_index = np.where(freqs <= end_freq)[0][-1]
+        # print(start_index)
+        # print(end_index)
+        # print(freqs.shape)
         # Apply the window function to the specific frequency range in the time domain
         if selected_window == "Hamming":
             window = self.hamming_window(end_index - start_index + 1)
@@ -93,8 +96,7 @@ class MainApp(QDialog, FORM_CLASS):
 
         phases = np.angle(transformed)
         complex_coefficients = amps * np.exp(1j * phases)
-        modified_signal_time = self.Inverse_Fourier_Transform(complex_coefficients)
-        return  freqs, amps, modified_signal_time, window_title
+        return  freqs, amps, complex_coefficients, window_title
 
     def Fourier_Transform_Signal(self,amplitude_signal, sampling_rate):
         """
