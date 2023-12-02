@@ -62,9 +62,9 @@ class MainApp(QMainWindow, FORM_CLASS):
             'Animal Sounds': [4,
                               [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                self.verticalSlider_4],
-                              ["Lion", "Monkey", "Bird", "Elephant"], False,
+                              ["Lion", "Dog", "Cat", "Owl"], False,
                               #  frequency ranges
-                              [[3000, 4000], [190, 1190], [6000, 7000], [590, 830]]
+                              [[160, 215], [345, 450], [400, 420], [730, 900]]
                               ],
             'ECG Abnormalities': [4,
                                   [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
@@ -271,15 +271,13 @@ class MainApp(QMainWindow, FORM_CLASS):
                 processed_freqs, processed_amps, processed_signal, window_title = self.m2.apply_window_to_frequency_range(
                 processed_freqs, processed_amps, processed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
 
-            self.clear_media_player()
-            self.graphicsView_2.clear()
-            self.graphicsView_3.clear()
-            self.graphicsView_2.plot(processed_freqs, processed_amps, pen='r')
             # Construct the complex spectrum
             self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)
-            #make len of self.time_a equal to len of self.processed_time_signal
+            # make len of self.time_a equal to len of self.processed_time_signal
             self.time_a_processed = np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
-            self.graphicsView_3.plot(self.time_a_processed, self.processed_time_signal, pen='r')
+            self.clear_media_player()
+            self.graphicsView_2.clear()
+            self.graphicsView_2.plot(processed_freqs, processed_amps, pen='r')
             self.spectrogram(self.processed_time_signal, self.sampling_rate, self.widget_2)
 
  
@@ -399,14 +397,14 @@ class MainApp(QMainWindow, FORM_CLASS):
     def zoom_in(self):
         if self.zoom_counter < 5:  # Set your desired limit
             self.zoom(self.graphicsView, 1.3)
-            self.zoom(self.graphicsView_2, 1.3)
+            self.zoom(self.graphicsView_3, 1.3)
             self.zoom_counter += 1
 
     # A function used to zoom out from the graph
     def zoom_out(self):
         if self.zoom_counter > -3:
             self.zoom(self.graphicsView, 0.5)
-            self.zoom(self.graphicsView_2, 0.5)
+            self.zoom(self.graphicsView_3, 0.5)
             self.zoom_counter -= 1
 
     
