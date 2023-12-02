@@ -62,9 +62,9 @@ class MainApp(QMainWindow, FORM_CLASS):
             'Animal Sounds': [4,
                               [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                self.verticalSlider_4],
-                              ["Lion", "Dog", "Cat", "Owl"], False,
+                              ["Whale", "Cricket", "Bird", "Dog"], False,
                               #  frequency ranges
-                              [[160, 215], [345, 450], [400, 420], [730, 900]]
+                              [[600, 800], [3800, 7000], [1000, 6000], [0, 3000]]
                               ],
             'ECG Abnormalities': [4,
                                   [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
@@ -364,7 +364,8 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.graphicsView_3.clear()
         self.end_indx = 0
         self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
-        self.graphicsView_3.plot(self.time_a_processed, self.processed_time_signal, pen='r')
+        self.graphicsView_3.plot(self.time_a_processed,self.processed_time_signal,pen='r')
+
 
   
     def update_icon(self, state):
