@@ -71,7 +71,7 @@ class MainApp(QMainWindow, FORM_CLASS):
                                    self.verticalSlider_4],
                                   ["Atrial Trachycardia", "Atrial Flutter", "Atrial Fibrillation", "Normal"], False,
                                   #  frequency ranges
-                                  [[200, 300], [300, 400], [550, 650], [650,1000]]
+                                  [[200, 300], [300, 400], [400, 650], [0,150]]
                                   ],
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
@@ -103,6 +103,8 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.signal_choosen.currentIndexChanged.connect(self.clear_media_player)
         self.speed_selection.currentIndexChanged.connect(self.change_speed)
         self.play_pause_btn.clicked.connect(self.toggle_playback)
+        # Connect the stateChanged signal to the update_plot method
+        self.media_player.stateChanged.connect(self.update_plot)
         # Connect the stateChanged signal to the update_icon method
         self.media_player.stateChanged.connect(self.update_icon)
         self.zoom_out_push_btn.clicked.connect(self.zoom_out)
@@ -212,7 +214,6 @@ class MainApp(QMainWindow, FORM_CLASS):
                     self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[(i + 1) * n]])
 
     def dynamic_plot(self, signal,time, graphicsView):
-        self.end_indx = 0
         self.timer_1 = QTimer()
         self.timer_1.setInterval(45)
         self.timer_1.timeout.connect(functools.partial(self.update_plot_data_1, signal, time,graphicsView))
@@ -225,13 +226,35 @@ class MainApp(QMainWindow, FORM_CLASS):
             chunk_size = int((len(signal) * 50 * 10 ** -3) / self.time_a[-1])
             start_indx = self.end_indx
             end_indx = min(start_indx + chunk_size, len(signal))
-            graphicsView.plot(self.time_a[start_indx:end_indx],signal[start_indx:end_indx], pen='b')
+            graphicsView.plot(time[start_indx:end_indx],signal[start_indx:end_indx], pen='b')
             self.end_indx = end_indx
             if self.end_indx >= len(signal):
                 self.end_indx = len(signal)
                 self.timer_1.stop()
                 graphicsView.clear()
                 graphicsView.plot(time, signal, pen='r')
+
+    def update_plot(self, state):
+        signal_choosen = self.signal_choosen.currentText()
+        if signal_choosen == 'Original Signal':
+            signal = self.original_signal
+            time = self.time_a
+            graphicsView = self.graphicsView
+        else:
+            signal = self.processed_time_signal
+            time = self.time_a_processed
+            graphicsView = self.graphicsView_3
+
+        if state == QMediaPlayer.PlayingState:
+            self.dynamic_plot(signal, time, graphicsView)
+
+        elif state == QMediaPlayer.PausedState:
+            self.timer_1.stop()
+        elif state == QMediaPlayer.StoppedState:
+            graphicsView.clear()
+            graphicsView.plot(time, signal, pen='r')
+            self.timer_1.stop()
+            self.end_indx = 0
 
     def slider_changed(self, slider):
         if self.signal_added:
@@ -298,7 +321,7 @@ class MainApp(QMainWindow, FORM_CLASS):
                 signal = self.processed_time_signal
                 time= self.time_a_processed
                 graphicsView = self.graphicsView_3
-            self.dynamic_plot(signal,time, graphicsView)
+            self.dynamic_plot(signal, time, graphicsView)
 
             if self.media_player.mediaStatus() == QMediaPlayer.NoMedia:
                 # Set media content if not already set
@@ -321,11 +344,29 @@ class MainApp(QMainWindow, FORM_CLASS):
         if self.signal_added:
             self.media_player.setPosition(0)
             self.media_player.play()
+            self.end_indx = 0
+            signal_choosen = self.signal_choosen.currentText()
+            if signal_choosen == 'Original Signal':
+                signal = self.original_signal
+                time = self.time_a
+                graphicsView = self.graphicsView
+            else:
+                signal = self.processed_time_signal
+                time = self.time_a_processed
+                graphicsView = self.graphicsView_3
+            self.dynamic_plot(signal, time, graphicsView)
+            graphicsView.clear()
+            graphicsView.plot(time, signal, pen='r')
 
        
     def clear_media_player(self):
         self.media_player.stop()  # Stop playback if currently playing
         self.media_player.setMedia(QMediaContent())  # Clear media content
+        self.graphicsView.clear()
+        self.graphicsView_3.clear()
+        self.end_indx = 0
+        self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
+        self.graphicsView_3.plot(self.time_a_processed, self.processed_time_signal, pen='r')
 
   
     def update_icon(self, state):
