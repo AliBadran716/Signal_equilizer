@@ -71,7 +71,7 @@ class MainApp(QMainWindow, FORM_CLASS):
                                    self.verticalSlider_4],
                                   ["Atrial Trachycardia", "Atrial Flutter", "Atrial Fibrillation", "Normal"], False,
                                   #  frequency ranges
-                                  [[200, 300], [300, 400], [550, 650], [0,150]]
+                                  [[200, 300], [300, 400], [550, 650], [650,1000]]
                                   ],
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
