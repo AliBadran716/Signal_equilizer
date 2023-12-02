@@ -62,9 +62,9 @@ class MainApp(QMainWindow, FORM_CLASS):
             'Animal Sounds': [4,
                               [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                self.verticalSlider_4],
-                              ["Whale", "Cricket", "Bird", "Dog"], False,
+                              ["Wolf", "Dolphin", "Cat", "Bird"], False,
                               #  frequency ranges
-                              [[600, 800], [3800, 7000], [1000, 6000], [0, 3000]]
+                              [[0, 1470], [1470, 1470*2], [1470*2, 1470*3], [1470*3, 1470*4]]
                               ],
             'ECG Abnormalities': [4,
                                   [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
@@ -211,7 +211,13 @@ class MainApp(QMainWindow, FORM_CLASS):
             if len(self.signal_freqs) > 10:
                 n = len(self.signal_freqs) // 10
                 for i in range(10):
-                    self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[(i + 1) * n]])
+                    self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
+
+            # Set the x-axis range to 0 to 0.04 if the file is an ECG file
+            if 'ECG_Arr.wav' in path_file_upload:
+                self.graphicsView.getViewBox().setXRange(0, 0.04)
+                self.graphicsView_3.getViewBox().setXRange(0, 0.04)
+
 
     def dynamic_plot(self, signal,time, graphicsView):
         self.timer_1 = QTimer()
