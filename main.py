@@ -122,7 +122,8 @@ class MainApp(QMainWindow, FORM_CLASS):
             else:
                 element.hide()
     def spectrogram(self, data, sampling_rate,widget):
-        
+        if widget.layout() is not None:
+            widget.layout().deleteLater()
         _, _, Sxx = spectrogram(data, sampling_rate)
         time_axis = np.linspace(0, len(data) / sampling_rate, num=Sxx.shape[1])
         fig = Figure()
