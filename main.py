@@ -29,6 +29,11 @@ from scipy.signal import spectrogram
 from pyqtgraph import GraphicsLayoutWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from PyQt5.QtWidgets import QFileDialog
+import pandas as pd
+import os
+from scipy.io.wavfile import write
+
 
 # Load the UI file and connect it with the Python file
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "main.ui"))
@@ -162,16 +167,28 @@ class MainApp(QMainWindow, FORM_CLASS):
 
     def add_signal(self):
         """
-        Load a WAV signal file, add it to the application's data, and plot it.
+        Load a WAV or CSV and if its csv convert it into wav signal file, add it to the application's data, and plot it.
         """
-
         options = QFileDialog().options()
         options |= QFileDialog.ReadOnly
-        self.filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV File", "", "WAV Files (*.wav);;All Files ()",
-                                                  options=options)
+        self.filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV or CSV File", "", "WAV Files (*.wav);;CSV Files (*.csv);;All Files ()",
+                                                options=options)
         if self.filepath:
             self.clear_graphs()
-            self.load_audio_file(self.filepath)
+            # Check if the file is a CSV file
+            if self.filepath.endswith('.csv'):
+                # Read the CSV file
+                signal_data = pd.read_csv(self.filepath)
+                time_column = signal_data.iloc[:, 0]
+                amp_column = signal_data.iloc[:, 1]
+                self.time_a = time_column
+                # Convert the data to a WAV file
+                wav_filepath = os.path.splitext(self.filepath)[0] + '.wav'
+                write(wav_filepath, 44100, amp_column)
+                # Send the path of the WAV file to load_audio_file()
+                self.load_audio_file(wav_filepath)
+            else:
+                self.load_audio_file(self.filepath)
             self.signal_added = True
 
        
