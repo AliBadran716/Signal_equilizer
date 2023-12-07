@@ -62,9 +62,9 @@ class MainApp(QMainWindow, FORM_CLASS):
             'Animal Sounds': [4,
                               [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                self.verticalSlider_4],
-                              ["Wolf", "Dolphin", "Cat", "Bird"], False,
+                              ["Cow", "Whale", "Cat", "Cricket"], False,
                               #  frequency ranges
-                              [[0, 1470], [1470, 1470*2], [1470*2, 1470*3], [1470*3, 1470*4]]
+                              [[0, 700], [700, 900], [750, 4500], [3800, 22000]]
                               ],
             'ECG Abnormalities': [4,
                                   [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
