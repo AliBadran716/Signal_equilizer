@@ -77,25 +77,20 @@ class MainApp(QDialog, FORM_CLASS):
         # Apply the window function to the specific frequency range in the time domain
         if selected_window == "Hamming":
             window = self.hamming_window(end_index - start_index + 1)
-            window_title = "Hamming Window Function"
         elif selected_window == "Hanning":
             window = self.hanning_window(end_index - start_index + 1)
-            window_title = "Hanning Window Function"
         elif selected_window == "Gaussian":
             window = self.gaussian_window(end_index - start_index + 1)
-            window_title = "Gaussian Window Function"
         elif selected_window == "Rectangle":
             window = self.rectangular_window(end_index - start_index + 1)
-            window_title = "Rectangular Window Function"
         else:
             window = 1
             scale_factor = 1
-            window_title = "No Window Function"
         amps[start_index:end_index + 1] *= window * scale_factor
 
         phases = np.angle(transformed)
         complex_coefficients = amps * np.exp(1j * phases)
-        return  freqs, amps, complex_coefficients, window_title
+        return  freqs, amps, complex_coefficients, window * scale_factor
 
     def Fourier_Transform_Signal(self,amplitude_signal, sampling_rate):
         """

@@ -270,20 +270,27 @@ class MainApp(QMainWindow, FORM_CLASS):
             sliders_values = self.get_sliders_values(num_sliders)
             #sliders_scale_factors = sliders_values // 50
             processed_freqs, processed_amps, processed_signal = self.DFT()
+            self.graphicsView_2.clear()
             for i in range(num_sliders):
                 start_freq = self.modes_dict[selected_mode][4][i][0]
                 end_freq = self.modes_dict[selected_mode][4][i][1]
                 selected_window = self.window_combo_box.currentText()
                 scale_factor = sliders_values[i] / 50
-                processed_freqs, processed_amps, processed_signal, window_title = self.m2.apply_window_to_frequency_range(
+                processed_freqs, processed_amps, processed_signal, window = self.m2.apply_window_to_frequency_range(
                 processed_freqs, processed_amps, processed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
+
+                # Find indices corresponding to start and end frequencies
+                start_index = np.where(processed_freqs >= start_freq)[0][0]
+                end_index = np.where(processed_freqs <= end_freq)[0][-1]
+                max_amp = self.m2.get_max_amplitude(processed_amps[start_index:end_index+1])
+                # Plot the windowed signal on graphicsView_2
+                self.graphicsView_2.plot(processed_freqs[start_index:end_index+1], window * max_amp, pen='b')
 
             # Construct the complex spectrum
             self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)
             # make len of self.time_a equal to len of self.processed_time_signal
             self.time_a_processed = np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
             self.clear_media_player()
-            self.graphicsView_2.clear()
             self.graphicsView_2.plot(processed_freqs, processed_amps, pen='r')
             self.spectrogram(self.processed_time_signal, self.sampling_rate, self.widget_2)
 
@@ -392,14 +399,11 @@ class MainApp(QMainWindow, FORM_CLASS):
     def zoom(self, graphicsView, zoom_factor):
         # Get the current visible x and y ranges
         x_min, x_max = graphicsView.getViewBox().viewRange()[0]
-        y_min, y_max = graphicsView.getViewBox().viewRange()[1]
         # Calculate the new visible x and y ranges (zoom)
         new_x_min = x_min * zoom_factor
         new_x_max = x_max * zoom_factor
-        new_y_min = y_min * zoom_factor
-        new_y_max = y_max * zoom_factor
         # Set the new visible x and y ranges
-        graphicsView.getViewBox().setRange(xRange=[new_x_min, new_x_max], yRange=[new_y_min, new_y_max])
+        graphicsView.getViewBox().setRange(xRange=[new_x_min, new_x_max])
 
     # A function used to zoom in the graph
     def zoom_in(self):
@@ -434,42 +438,6 @@ class MainApp(QMainWindow, FORM_CLASS):
         signal = self.original_signal
         return freq_Hz / f_max * len(signal)
 
-    def split_arrhythmia(self, ecg_freq):
-        """
-            separate arithmia components
-            Parameters
-            ----------
-            ecg_freq : array of complex
-                arrithmia and normal components
-            Return
-            ----------
-            f_arrhythmia : array of complex
-            f_normal : array of complex
-        """
-        artial_trachycardia = [0] * len(ecg_freq)
-        artial_flutter = [0] * len(ecg_freq)
-        artial_fibrillation = [0] * len(ecg_freq)
-
-        trachycardia = self.getindex(250)
-
-        flutter = self.getindex(350)
-
-        fibrillation = self.getindex(600)
-
-        # 230
-        artial_trachycardia[trachycardia - 50:trachycardia + 50] = ecg_freq[
-                                                                   trachycardia - 50:trachycardia + 50] * np.hanning(
-            100)
-        # 300
-        artial_flutter[flutter - 50:flutter + 50] = ecg_freq[flutter - 50:flutter + 50] * np.hanning(350 - 250)
-        # 350
-        artial_fibrillation[fibrillation - 50:fibrillation + 50] = ecg_freq[
-                                                                   fibrillation - 50:fibrillation + 50] * np.hanning(
-            360 - 350)
-
-        f_normal = ecg_freq - artial_trachycardia - artial_flutter - artial_fibrillation
-
-        return artial_trachycardia, artial_flutter, artial_fibrillation,f_normal
 
 def main():  # method to start app
     app = QApplication(sys.argv)
