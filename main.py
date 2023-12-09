@@ -20,9 +20,7 @@ from pyqtgraph import ImageView
 import scipy
 from scipy.io import wavfile
 import numpy as np
-import pandas as pd
-import librosa
-import librosa.display      
+import pandas as pd     
 from numpy.fft import fft, ifft, rfft, rfftfreq, irfft, fftfreq
 import scipy.io.wavfile as wav 
 from scipy.signal import spectrogram
@@ -69,9 +67,9 @@ class MainApp(QMainWindow, FORM_CLASS):
             'Musical Instruments': [4,
                                     [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                      self.verticalSlider_4],
-                                    ["Violin", "Trumpet", "Xylo", "Triangle"], False,
+                                    ["Trumpet", "Xylophone" ,"Brass", "Celesta"], False,
                                     # frequency ranges
-                                    [[0, 1000], [1000, 2000], [2000, 3000], [4000, 5000]]
+                                    [[0, 500], [500, 1200], [1200, 6400], [4000, 13000]]
                                     ],
             'Animal Sounds': [4,
                               [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
@@ -90,6 +88,9 @@ class MainApp(QMainWindow, FORM_CLASS):
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
                                self.label_7, self.label_8, self.label_9, self.label_10]
+        self.file_extensions_dict = {".wav" : "Audio",
+                                ".csv" : "ECG",
+                                ".hea" : "ECG" }
         self.signal_freqs = None
         self.signal_amps = None
         self.transformed_signal = None
@@ -174,121 +175,81 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.graphicsView_3.clear()
        
 
+
     def add_signal(self):
         """
-        Load a WAV or CSV and if its csv convert it into wav signal file, add it to the application's data, and plot it.
+        Read a WAV, CSV, or HEA file, and get the extension of the file and the filepath to pass to the load_audio_file function
+        
         """
         options = QFileDialog().options()
         options |= QFileDialog.ReadOnly
-        self.filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV or CSV File", "", "WAV Files (*.wav);;CSV Files (*.csv);;All Files ()",
-                                                options=options)
+        self.filepath, _ = QFileDialog.getOpenFileName(self, "Open WAV, CSV, or HEA File", "", 
+                                                    "WAV Files (*.wav);;CSV Files (*.csv);;HEA Files (*.hea);;All Files ()",
+                                                    options=options)
         if self.filepath:
-            self.clear_graphs()
-           
-            self.load_audio_file(self.filepath)
             self.signal_added = True
-
-       
-    def load_audio_file(self, path_file_upload):
+            # Extract the file extension
+            _, file_extension = os.path.splitext(self.filepath)
+            self.clear_graphs()
+            # Pass the file extension along with the filepath to the load_audio_file function
+            self.load_audio_file(self.filepath, file_extension)
+         
+    def load_audio_file(self, path_file_upload, file_extension):
     
         """
-        Function to upload audio file given file path using librosa
-        
-        (Librosa is a Python package for analyzing and working with audio files,
-        and it can handle a variety of audio file formats, including WAV, MP3, FLAC, OGG, 
-        and many more.)
+        Function to upload audio file given file path 
         
         Parameters:
         Audio file path
+        Audio file extension
         
         Output:
         Audio samples
         Sampling rate
         """
         if path_file_upload is not None:
+            self.mode = self.file_extensions_dict[file_extension]
+
             if path_file_upload.endswith('.csv'):
-                self.mode = 'ECG'   
-                self.graphicsView.setTitle('ECG Signal')
                 signal_data = pd.read_csv(path_file_upload) 
-                time_a = np.arange(0, len(signal_data)) / 1000
-                # signal transpose
-                self.original_signal = signal_data.iloc[:,0]
-                # print(self.original_signal)
-                self.processed_time_signal = signal_data.iloc[:, 0]
-                self.sampling_rate = 1000
-                self.time_a = time_a
-                self.time_a_processed= time_a
-                self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
-                self.graphicsView.setTitle('Time Domain')
-                self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
-                self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
-                self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
-                self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
-                # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
-                if len(self.signal_freqs) > 10:
-                    n = len(self.signal_freqs) // 10
-                    for i in range(10):
-                        self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
-            if path_file_upload.endswith('.hea'):
-                self.mode = 'ECG'
-                self.graphicsView.setTitle('ECG Signal')  
+                signal_time = np.arange(0, len(signal_data)) / 1000
+                self.set_data(signal_data.iloc[:,0], signal_data.iloc[:,0], 1000, signal_time, signal_time)
+                
+            elif path_file_upload.endswith('.hea'): 
                 record = wfdb.rdrecord(self.filepath[:-4])
                 ecg_data = record.p_signal
                 ecg_df = pd.DataFrame(data=ecg_data[:6000], columns=[f'Channel_{i+1}' for i in range(ecg_data.shape[1])])
-                time_a = np.arange(0, len(ecg_df)) / record.fs
-                sampling_rate = record.fs
+                time = np.arange(0, len(ecg_df)) / record.fs
+                self.set_data(ecg_df.iloc[:, 0], ecg_df.iloc[:, 0], record.fs, time, time)
                 
-                self.original_signal = ecg_df.iloc[:, 0]
-                self.processed_time_signal = ecg_df.iloc[:, 0]
-                self.sampling_rate = sampling_rate
-                # if (len(self.original_signal.shape) > 1):
-                #     self.original_signal = self.original_signal[:,0]
-                self.time_a = time_a
-                self.time_a_processed= time_a
-                
-                self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
-                self.graphicsView.setTitle('Time Domain')
-                self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
-                
-                # self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
-               
-                self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
-                self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
-                self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
-                # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
-                if len(self.signal_freqs) > 10:
-                    n = len(self.signal_freqs) // 10
-                    for i in range(10):
-                        self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
-            
-            if path_file_upload.endswith('.wav'):
-                self.mode = 'Audio'
+            else:
                 sampling_rate , audio_samples= scipy.io.wavfile.read(path_file_upload)
-                self.original_signal = audio_samples
-                self.processed_time_signal = audio_samples
-                self.sampling_rate = sampling_rate
-                if (len(self.original_signal.shape) > 1):
-                    self.original_signal = self.original_signal[:,0]
-                self.time_a = np.arange(0, len(self.original_signal)) / self.sampling_rate
-                self.time_a_processed= np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
-                self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
-                self.graphicsView.setTitle('Time Domain')
-                self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
-                
-                self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
-                
-                self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
-                self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
-                # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
-                if len(self.signal_freqs) > 10:
-                    n = len(self.signal_freqs) // 10
-                    for i in range(10):
-                        self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
+                if (len(audio_samples) > 1):
+                    audio_samples = audio_samples[:,0]
+                original_time = np.arange(0, len(audio_samples)) / sampling_rate
+                processed_time = np.arange(0, len(audio_samples)) / sampling_rate
+                self.set_data(audio_samples, audio_samples, sampling_rate, original_time, processed_time)
 
-                # Set the x-axis range to 0 to 0.04 if the file is an ECG file
-                if 'ECG_Arr.wav' in path_file_upload:
-                    self.graphicsView.getViewBox().setXRange(0, 0.04)
-                    self.graphicsView_3.getViewBox().setXRange(0, 0.04)
+            
+              
+    def set_data(self, original_signal, processed_time_signal, sampling_rate, original_time, processed_time):
+        self.original_signal = original_signal
+        self.processed_time_signal = processed_time_signal
+        self.sampling_rate = sampling_rate
+        self.time_a = original_time
+        self.time_a_processed = processed_time
+        self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
+        self.graphicsView.setTitle('Time Domain')
+        self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
+        self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
+        self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
+        self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
+
+        # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
+        if len(self.signal_freqs) > 10:
+            n = len(self.signal_freqs) // 10
+            for i in range(10):
+                self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
 
 
     def dynamic_plot(self, signal,time, graphicsView):
@@ -296,7 +257,6 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.timer_1.setInterval(45)
         self.timer_1.timeout.connect(functools.partial(self.update_plot_data_1, signal, time,graphicsView))
         self.timer_1.start()
-
 
     def update_plot_data_1(self,signal,time, graphicsView):
         if self.signal_added:
