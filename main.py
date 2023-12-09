@@ -49,13 +49,6 @@ class MainApp(QMainWindow, FORM_CLASS):
         """
         super(MainApp, self).__init__(parent)
         self.setupUi(self)
-        self.ecg_arr = {
-            
-            'Atrial Trachycardia': 100,
-            'Atrial Flutter': 178,
-            'Atrial Fibrillation': 100,
-            'Normal': 100,
-        }
         self.modes_dict = {
             'Unifrom Range': [10, [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                    self.verticalSlider_4,
@@ -91,6 +84,8 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.file_extensions_dict = {".wav" : "Audio",
                                 ".csv" : "ECG",
                                 ".hea" : "ECG" }
+        self.abnormalities_dict = {"Normal": 0, "Atrial_Fibrillation": 1, "Atrial_Flutter": 2, "Ventricular_Fibrillation": 3}
+        self.file_name = None
         self.signal_freqs = None
         self.signal_amps = None
         self.transformed_signal = None
@@ -189,7 +184,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         if self.filepath:
             self.signal_added = True
             # Extract the file extension
-            _, file_extension = os.path.splitext(self.filepath)
+            self.file_name, file_extension = os.path.splitext(os.path.basename(self.filepath))
             self.clear_graphs()
             # Pass the file extension along with the filepath to the load_audio_file function
             self.load_audio_file(self.filepath, file_extension)
@@ -298,26 +293,22 @@ class MainApp(QMainWindow, FORM_CLASS):
         if self.signal_added:
             selected_mode = self.comboBox.currentText()
             num_sliders = self.modes_dict[selected_mode][0]
-            
             sliders_values = self.get_sliders_values(num_sliders)
-            #sliders_scale_factors = sliders_values // 50
             processed_freqs, processed_amps, processed_signal = self.DFT()
-            
             self.graphicsView_2.clear()
+
             for i in range(num_sliders):
                 start_freq = self.modes_dict[selected_mode][4][i][0]
                 end_freq = self.modes_dict[selected_mode][4][i][1]
-                # ecg_arr = self.ecg_arr[self.modes_dict[selected_mode][2][i]]
                 selected_window = self.window_combo_box.currentText()
-                print (sliders_values[i]    )
                 if selected_mode == 'ECG Abnormalities':
+                    self.handle_abnormalities()
                     if sliders_values[i]<24 and i < 3:
                         sliders_values[i]=24
                     if sliders_values[3] < 6:
                         sliders_values[3] = 6
-                        
-                scale_factor = sliders_values[i] / 50
 
+                scale_factor = sliders_values[i] / 50
                 processed_freqs, processed_amps, processed_signal, window = self.m2.apply_window_to_frequency_range(
                 processed_freqs, processed_amps, processed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate )
 
@@ -325,29 +316,14 @@ class MainApp(QMainWindow, FORM_CLASS):
                 start_index = np.where(processed_freqs >= start_freq)[0][0]
                 end_index = np.where(processed_freqs <= end_freq)[0][-1]
                 max_amp = self.m2.get_max_amplitude(processed_amps[start_index:end_index+1])
-                # print(max_amp)
-                # Plot the windowed signal on graphicsView_2
                 self.graphicsView_2.plot(processed_freqs[start_index:end_index+1], window * max_amp, pen='b')
 
             # Construct the complex spectrum
             if self.mode == 'ECG':
                 self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)
-                
-                # output_file = "vf.csv"
-
-                # # Open the CSV file for writing
-                # with open(output_file, 'w') as csvfile:
-                #     # Create a writer object from csv module
-                #     csvwriter = csv.writer(csvfile)
-                #     # Write the header in the CSV file
-                #     csvwriter.writerow([ 'Amplitude'])
-                #     # Loop through the time and amplitude arrays and write each row in the CSV file
-                #     for i in range(len(self.processed_time_signal)):
-                #         csvwriter.writerow([self.processed_time_signal[i]])
                  
             else:
                 self.processed_time_signal = np.int16(self.m2.Inverse_Fourier_Transform(processed_signal))
-            # make len of self.time_a equal to len of self.processed_time_signal
             self.time_a_processed = np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
             self.clear_media_player()
             self.graphicsView_2.plot(processed_freqs, processed_amps, pen='r')
@@ -366,7 +342,18 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.graphicsView_2.plot(xf,abs(transformed), pen='r')
         
         return xf, abs(transformed), transformed
+    
+    def handle_abnormalities(self):
+        active_slidder = self.abnormalities_dict[self.file_name]
+        # Deactivating the other sliders, so if thier values are changed, nothing will happen 
+        for i in range(4):
+            slider = getattr(self, f"verticalSlider_{i + 1}")
+            if i != active_slidder:
+                slider.setEnabled(False)
+            else:
+                slider.setEnabled(True)
 
+      
     def create_temp_wav_file(self):
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         temp_file.close()
