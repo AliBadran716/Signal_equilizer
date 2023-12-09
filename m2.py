@@ -68,8 +68,10 @@ class MainApp(QDialog, FORM_CLASS):
 
     # Function to apply a window to a specific frequency range
     def apply_window_to_frequency_range(self, freqs, amps,transformed, start_freq, end_freq, scale_factor, selected_window='Select window', sampledrate = 200):
-
+        # print("freqs",freqs)
         # Find indices corresponding to start and end frequencies
+        # print("start_freq",start_freq)
+        # print(freqs[0])
         start_index = np.where(freqs >= start_freq)[0][0]
         end_index = np.where(freqs <= end_freq)[0][-1]
         freqs_in_range = freqs[start_index:end_index + 1]
@@ -86,6 +88,7 @@ class MainApp(QDialog, FORM_CLASS):
         else:
             window = 1
             scale_factor = 1
+         
         amps[start_index:end_index + 1] *= window * scale_factor
 
         phases = np.angle(transformed)
@@ -148,7 +151,7 @@ class MainApp(QDialog, FORM_CLASS):
         
         Amplitude_time_domain = irfft(Magnitude_frequency_components).real #Transform the signal back to the time domain.
         
-        return np.int16(Amplitude_time_domain)  #ensure the output is real.
+        return Amplitude_time_domain  #ensure the output is real.
 
     def get_max_amplitude(self, audio_data):
         """

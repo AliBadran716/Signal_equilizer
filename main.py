@@ -33,7 +33,9 @@ from PyQt5.QtWidgets import QFileDialog
 import pandas as pd
 import os
 from scipy.io.wavfile import write
-
+import wfdb
+import array
+import csv
 
 # Load the UI file and connect it with the Python file
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "main.ui"))
@@ -49,6 +51,13 @@ class MainApp(QMainWindow, FORM_CLASS):
         """
         super(MainApp, self).__init__(parent)
         self.setupUi(self)
+        self.ecg_arr = {
+            
+            'Atrial Trachycardia': 100,
+            'Atrial Flutter': 178,
+            'Atrial Fibrillation': 100,
+            'Normal': 100,
+        }
         self.modes_dict = {
             'Unifrom Range': [10, [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                    self.verticalSlider_4,
@@ -69,14 +78,14 @@ class MainApp(QMainWindow, FORM_CLASS):
                                self.verticalSlider_4],
                               ["Cow", "Whale", "Cat", "Cricket"], False,
                               #  frequency ranges
-                              [[0, 700], [700, 900], [750, 4500], [3800, 22000]]
+                              [[0, 620], [650, 900], [750, 4500], [3800, 22000]]
                               ],
             'ECG Abnormalities': [4,
                                   [self.verticalSlider_1, self.verticalSlider_2, self.verticalSlider_3,
                                    self.verticalSlider_4],
-                                  ["Atrial Trachycardia", "Atrial Flutter", "Atrial Fibrillation", "Normal"], False,
+                                  ["Normal", "Atrial Fibrillation" , "Atrial Flutter", "Ventricular fibrillation"], False,
                                   #  frequency ranges
-                                  [[200, 300], [300, 400], [400, 650], [0,150]]
+                                  [[0, 3], [15, 20], [2, 8], [0,5]]
                                   ],
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
@@ -136,7 +145,7 @@ class MainApp(QMainWindow, FORM_CLASS):
         ax = fig.add_subplot(111)
         ax.imshow(10 * np.log10(Sxx), aspect='auto', cmap='viridis',extent=[time_axis[0], time_axis[-1], 0, sampling_rate / 2])
         # ax = np.rot90(ax, k=1)
-        ax.invert_yaxis()
+        # ax.invert_yaxis()
         ax.axes.plot()
         canvas = FigureCanvas(fig)
         layout = QVBoxLayout()
@@ -175,20 +184,8 @@ class MainApp(QMainWindow, FORM_CLASS):
                                                 options=options)
         if self.filepath:
             self.clear_graphs()
-            # Check if the file is a CSV file
-            if self.filepath.endswith('.csv'):
-                # Read the CSV file
-                signal_data = pd.read_csv(self.filepath)
-                time_column = signal_data.iloc[:, 0]
-                amp_column = signal_data.iloc[:, 1]
-                self.time_a = time_column
-                # Convert the data to a WAV file
-                wav_filepath = os.path.splitext(self.filepath)[0] + '.wav'
-                write(wav_filepath, 44100, amp_column)
-                # Send the path of the WAV file to load_audio_file()
-                self.load_audio_file(wav_filepath)
-            else:
-                self.load_audio_file(self.filepath)
+           
+            self.load_audio_file(self.filepath)
             self.signal_added = True
 
        
@@ -209,32 +206,89 @@ class MainApp(QMainWindow, FORM_CLASS):
         Sampling rate
         """
         if path_file_upload is not None:
-            sampling_rate , audio_samples= scipy.io.wavfile.read(path_file_upload)
-            self.original_signal = audio_samples
-            self.processed_time_signal = audio_samples
-            self.sampling_rate = sampling_rate
-            if (len(self.original_signal.shape) > 1):
-                self.original_signal = self.original_signal[:,0]
-            self.time_a = np.arange(0, len(self.original_signal)) / self.sampling_rate
-            self.time_a_processed= np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
-            self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
-            self.graphicsView.setTitle('Time Domain')
-            self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
+            if path_file_upload.endswith('.csv'):
+                self.mode = 'ECG'   
+                self.graphicsView.setTitle('ECG Signal')
+                signal_data = pd.read_csv(path_file_upload) 
+                time_a = np.arange(0, len(signal_data)) / 1000
+                # signal transpose
+                self.original_signal = signal_data.iloc[:,0]
+                # print(self.original_signal)
+                self.processed_time_signal = signal_data.iloc[:, 0]
+                self.sampling_rate = 1000
+                self.time_a = time_a
+                self.time_a_processed= time_a
+                self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
+                self.graphicsView.setTitle('Time Domain')
+                self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
+                self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
+                self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
+                self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
+                # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
+                if len(self.signal_freqs) > 10:
+                    n = len(self.signal_freqs) // 10
+                    for i in range(10):
+                        self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
+            if path_file_upload.endswith('.hea'):
+                self.mode = 'ECG'
+                self.graphicsView.setTitle('ECG Signal')  
+                record = wfdb.rdrecord(self.filepath[:-4])
+                ecg_data = record.p_signal
+                ecg_df = pd.DataFrame(data=ecg_data[:6000], columns=[f'Channel_{i+1}' for i in range(ecg_data.shape[1])])
+                time_a = np.arange(0, len(ecg_df)) / record.fs
+                sampling_rate = record.fs
+                
+                self.original_signal = ecg_df.iloc[:, 0]
+                self.processed_time_signal = ecg_df.iloc[:, 0]
+                self.sampling_rate = sampling_rate
+                # if (len(self.original_signal.shape) > 1):
+                #     self.original_signal = self.original_signal[:,0]
+                self.time_a = time_a
+                self.time_a_processed= time_a
+                
+                self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
+                self.graphicsView.setTitle('Time Domain')
+                self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
+                
+                # self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
+               
+                self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
+                self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
+                self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
+                # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
+                if len(self.signal_freqs) > 10:
+                    n = len(self.signal_freqs) // 10
+                    for i in range(10):
+                        self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
             
-            self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
-            
-            self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
-            self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
-            # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
-            if len(self.signal_freqs) > 10:
-                n = len(self.signal_freqs) // 10
-                for i in range(10):
-                    self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
+            if path_file_upload.endswith('.wav'):
+                self.mode = 'Audio'
+                sampling_rate , audio_samples= scipy.io.wavfile.read(path_file_upload)
+                self.original_signal = audio_samples
+                self.processed_time_signal = audio_samples
+                self.sampling_rate = sampling_rate
+                if (len(self.original_signal.shape) > 1):
+                    self.original_signal = self.original_signal[:,0]
+                self.time_a = np.arange(0, len(self.original_signal)) / self.sampling_rate
+                self.time_a_processed= np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
+                self.graphicsView.plot(self.time_a, self.original_signal, pen='r')
+                self.graphicsView.setTitle('Time Domain')
+                self.spectrogram(self.original_signal, self.sampling_rate,self.widget)
+                
+                self.signal_freqs, self.signal_amps, self.transformed_signal = self.DFT()
+                
+                self.graphicsView_3.plot(self.time_a, self.original_signal, pen='r')
+                self.spectrogram(self.original_signal, self.sampling_rate, self.widget_2)
+                # divide xf into 10 equal frequency ranges and store it in frequencey range of self.modes_dict of uniform ranges
+                if len(self.signal_freqs) > 10:
+                    n = len(self.signal_freqs) // 10
+                    for i in range(10):
+                        self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
 
-            # Set the x-axis range to 0 to 0.04 if the file is an ECG file
-            if 'ECG_Arr.wav' in path_file_upload:
-                self.graphicsView.getViewBox().setXRange(0, 0.04)
-                self.graphicsView_3.getViewBox().setXRange(0, 0.04)
+                # Set the x-axis range to 0 to 0.04 if the file is an ECG file
+                if 'ECG_Arr.wav' in path_file_upload:
+                    self.graphicsView.getViewBox().setXRange(0, 0.04)
+                    self.graphicsView_3.getViewBox().setXRange(0, 0.04)
 
 
     def dynamic_plot(self, signal,time, graphicsView):
@@ -284,27 +338,55 @@ class MainApp(QMainWindow, FORM_CLASS):
         if self.signal_added:
             selected_mode = self.comboBox.currentText()
             num_sliders = self.modes_dict[selected_mode][0]
+            
             sliders_values = self.get_sliders_values(num_sliders)
             #sliders_scale_factors = sliders_values // 50
             processed_freqs, processed_amps, processed_signal = self.DFT()
+            
             self.graphicsView_2.clear()
             for i in range(num_sliders):
                 start_freq = self.modes_dict[selected_mode][4][i][0]
                 end_freq = self.modes_dict[selected_mode][4][i][1]
+                # ecg_arr = self.ecg_arr[self.modes_dict[selected_mode][2][i]]
                 selected_window = self.window_combo_box.currentText()
+                print (sliders_values[i]    )
+                if selected_mode == 'ECG Abnormalities':
+                    if sliders_values[i]<24 and i < 3:
+                        sliders_values[i]=24
+                    if sliders_values[3] < 6:
+                        sliders_values[3] = 6
+                        
                 scale_factor = sliders_values[i] / 50
+
                 processed_freqs, processed_amps, processed_signal, window = self.m2.apply_window_to_frequency_range(
-                processed_freqs, processed_amps, processed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate)
+                processed_freqs, processed_amps, processed_signal, start_freq, end_freq, scale_factor, selected_window, self.sampling_rate )
 
                 # Find indices corresponding to start and end frequencies
                 start_index = np.where(processed_freqs >= start_freq)[0][0]
                 end_index = np.where(processed_freqs <= end_freq)[0][-1]
                 max_amp = self.m2.get_max_amplitude(processed_amps[start_index:end_index+1])
+                # print(max_amp)
                 # Plot the windowed signal on graphicsView_2
                 self.graphicsView_2.plot(processed_freqs[start_index:end_index+1], window * max_amp, pen='b')
 
             # Construct the complex spectrum
-            self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)
+            if self.mode == 'ECG':
+                self.processed_time_signal = self.m2.Inverse_Fourier_Transform(processed_signal)
+                
+                # output_file = "vf.csv"
+
+                # # Open the CSV file for writing
+                # with open(output_file, 'w') as csvfile:
+                #     # Create a writer object from csv module
+                #     csvwriter = csv.writer(csvfile)
+                #     # Write the header in the CSV file
+                #     csvwriter.writerow([ 'Amplitude'])
+                #     # Loop through the time and amplitude arrays and write each row in the CSV file
+                #     for i in range(len(self.processed_time_signal)):
+                #         csvwriter.writerow([self.processed_time_signal[i]])
+                 
+            else:
+                self.processed_time_signal = np.int16(self.m2.Inverse_Fourier_Transform(processed_signal))
             # make len of self.time_a equal to len of self.processed_time_signal
             self.time_a_processed = np.arange(0, len(self.processed_time_signal)) / self.sampling_rate
             self.clear_media_player()
