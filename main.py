@@ -329,6 +329,7 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.timer_1.stop()
             self.end_indx = 0
 
+
     def slider_changed(self, slider):
         """
         Handles the change of sliders, updates the plot, and applies processing based on slider values.
