@@ -1,39 +1,26 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.uic import loadUiType
-from PyQt5.QtWidgets import QApplication, QFileDialog
-from PyQt5.QtCore import Qt, QUrl, QTemporaryFile
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-import pandas as pd
-import pyqtgraph as pg
-import sys
-import numpy as np
-import os
-from os import path
-import tempfile
 import functools
-import sounddevice as sd
+import os
+import sys
+import tempfile
 import wave
-from PyQt5.QtGui import QIcon
-from pyqtgraph import ImageView
-import scipy
-from scipy.io import wavfile
+from os import path
+
 import numpy as np
-import pandas as pd     
-from numpy.fft import fft, ifft, rfft, rfftfreq, irfft, fftfreq
-import scipy.io.wavfile as wav 
-from scipy.signal import spectrogram
-from pyqtgraph import GraphicsLayoutWidget
+import pandas as pd
+import scipy
+import wfdb
+from PyQt5.QtCore import *
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QIcon
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.uic import loadUiType
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PyQt5.QtWidgets import QFileDialog
-import pandas as pd
-import os
-from scipy.io.wavfile import write
-import wfdb
-import array
-import csv
+from scipy.io import wavfile
+from scipy.signal import spectrogram
 
 # Load the UI file and connect it with the Python file
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "main.ui"))
