@@ -76,7 +76,7 @@ class MainApp(QMainWindow, FORM_CLASS):
                                    self.verticalSlider_4],
                                   ["Normal", "Atrial Fibrillation" , "Atrial Flutter", "Ventricular fibrillation"], False,
                                   #  frequency ranges
-                                  [[0, 3], [15, 20], [2, 8], [0,5]]
+                                  [[0, 1000], [15, 20], [2, 8], [0,5]]
                                   ],
         }
         self.sliders_labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6,
@@ -302,8 +302,11 @@ class MainApp(QMainWindow, FORM_CLASS):
                 end_freq = self.modes_dict[selected_mode][4][i][1]
                 selected_window = self.window_combo_box.currentText()
                 if selected_mode == 'ECG Abnormalities':
-                    self.handle_abnormalities()
-                    if sliders_values[i]<24 and i < 3:
+                    # self.handle_abnormalities()
+                    active_slidder = self.abnormalities_dict[self.file_name]
+                    if i != active_slidder and i != 0:
+                        sliders_values[i] = 50
+                    if sliders_values[i]<24 and i < 3 and i != 0:
                         sliders_values[i]=24
                     if sliders_values[3] < 6:
                         sliders_values[3] = 6
