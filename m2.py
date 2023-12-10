@@ -1,12 +1,11 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.uic import loadUiType
-from PyQt5.QtWidgets import QApplication 
 import sys
+from os import path
+
 import numpy as np
-from os import path     
-from numpy.fft import rfft,rfftfreq,irfft
+from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QApplication
+from PyQt5.uic import loadUiType
+from numpy.fft import rfft, rfftfreq, irfft
 
 # Load the UI file and connect it with the Python file
 FORM_CLASS, _ = loadUiType(path.join(path.dirname(__file__), "smoothingWindow.ui"))

@@ -409,22 +409,6 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.graphicsView_2.plot(xf,abs(transformed), pen='r')
         
         return xf, abs(transformed), transformed
-    
-
-
-    def handle_abnormalities(self):
-        """
-        Handles abnormalities in ECG mode by deactivating other sliders accordingly.
-        """
-        active_slidder = self.abnormalities_dict[self.file_name]
-        # Deactivating the other sliders, so if thier values are changed, nothing will happen 
-        for i in range(4):
-            slider = getattr(self, f"verticalSlider_{i + 1}")
-            if i != active_slidder:
-                slider.setEnabled(False)
-            else:
-                slider.setEnabled(True)
-
       
     def create_temp_wav_file(self):
         """
