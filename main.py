@@ -95,14 +95,15 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.graphicsView_3.setMinimumSize(200, 200)
 
     def handel_buttons(self):
+        """
+        Connects various buttons and combo box signals to their respective functions.
+        """
         self.actionOpen.triggered.connect(self.add_signal)
         self.comboBox.currentIndexChanged.connect(self.handle_sliders)
         self.signal_choosen.currentIndexChanged.connect(self.clear_media_player)
         self.speed_selection.currentIndexChanged.connect(self.change_speed)
         self.play_pause_btn.clicked.connect(self.toggle_playback)
-        # Connect the stateChanged signal to the update_plot method
         self.media_player.stateChanged.connect(self.update_plot)
-        # Connect the stateChanged signal to the update_icon method
         self.media_player.stateChanged.connect(self.update_icon)
         self.zoom_out_push_btn.clicked.connect(self.zoom_out)
         self.zoom_in_push_btn.clicked.connect(self.zoom_in)
@@ -112,13 +113,32 @@ class MainApp(QMainWindow, FORM_CLASS):
         for i in range(10):
             slider = getattr(self, f"verticalSlider_{i + 1}")
             slider.valueChanged.connect(functools.partial(self.slider_changed, slider))
+
+
     def showElements(self, elements, show=True):
+        """
+         A functions to show or hide a list of elements in the GUI.
+
+        Parameters:
+        - elements: List of elements (Qt widgets) to show or hide.
+        - show: Boolean, True to show elements, False to hide them.
+        """
         for element in elements:
             if show:
                 element.show()
             else:
                 element.hide()
-    def spectrogram(self, data, sampling_rate,widget):
+
+
+    def spectrogram(self, data, sampling_rate, widget):
+        """
+        Generate and display a spectrogram plot in a specified widget.
+
+        Parameters:
+        - data: Audio signal data.
+        - sampling_rate: Sampling rate of the audio signal.
+        - widget: Widget where the spectrogram plot will be displayed.
+        """
         if widget.layout() is not None:
             widget.layout().deleteLater()
         _, _, Sxx = spectrogram(data, sampling_rate)
@@ -127,8 +147,6 @@ class MainApp(QMainWindow, FORM_CLASS):
         fig = Figure(figsize=(3,3))
         ax = fig.add_subplot(111)
         ax.imshow(10 * np.log10(Sxx), aspect='auto', cmap='viridis',extent=[time_axis[0], time_axis[-1], 0, sampling_rate / 2])
-        # ax = np.rot90(ax, k=1)
-        # ax.invert_yaxis()
         ax.axes.plot()
         canvas = FigureCanvas(fig)
         layout = QVBoxLayout()
@@ -137,6 +155,9 @@ class MainApp(QMainWindow, FORM_CLASS):
 
 
     def handle_sliders(self):
+        """
+        Handle changes in the selected mode from the combo box and update sliders accordingly.
+        """
         selected_mode = self.comboBox.currentText()
         num_sliders = self.modes_dict[selected_mode][0]
         # reset slider positions
@@ -151,7 +172,11 @@ class MainApp(QMainWindow, FORM_CLASS):
             exec(f"shown_labels.append(self.label_{i + 1})")
         self.showElements(shown_labels)
 
+
     def clear_graphs(self):
+        """
+        Clear the content of all graph views in the GUI.
+        """
         self.graphicsView.clear()
         self.graphicsView_2.clear()
         self.graphicsView_3.clear()
@@ -161,7 +186,6 @@ class MainApp(QMainWindow, FORM_CLASS):
     def add_signal(self):
         """
         Read a WAV, CSV, or HEA file, and get the extension of the file and the filepath to pass to the load_audio_file function
-        
         """
         options = QFileDialog().options()
         options |= QFileDialog.ReadOnly
@@ -177,17 +201,12 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.load_audio_file(self.filepath, file_extension)
          
     def load_audio_file(self, path_file_upload, file_extension):
-    
         """
-        Function to upload audio file given file path 
-        
+        Load an audio file and set the necessary data for visualization.
+
         Parameters:
-        Audio file path
-        Audio file extension
-        
-        Output:
-        Audio samples
-        Sampling rate
+        - path_file_upload: Filepath of the audio file.
+        - file_extension: Extension of the audio file.
         """
         if path_file_upload is not None:
             self.mode = self.file_extensions_dict[file_extension]
@@ -215,6 +234,16 @@ class MainApp(QMainWindow, FORM_CLASS):
             
               
     def set_data(self, original_signal, processed_time_signal, sampling_rate, original_time, processed_time):
+        """
+        Set data for visualization in the GUI.
+
+        Parameters:
+        - original_signal: Original audio signal.
+        - processed_time_signal: Processed audio signal.
+        - sampling_rate: Sampling rate of the audio signal.
+        - original_time: Time array corresponding to the original signal.
+        - processed_time: Time array corresponding to the processed signal.
+        """
         self.original_signal = original_signal
         self.processed_time_signal = processed_time_signal
         self.sampling_rate = sampling_rate
@@ -234,15 +263,32 @@ class MainApp(QMainWindow, FORM_CLASS):
                 self.modes_dict['Unifrom Range'][4].append([self.signal_freqs[i * n], self.signal_freqs[min((i + 1) * n, len(self.signal_freqs) - 1)]])
 
 
-    def dynamic_plot(self, signal,time, graphicsView):
+    def dynamic_plot(self, signal, time, graphicsView):
+        """
+        Initiates dynamic plotting of a signal over time in a specified graphics view.
+
+        Parameters:
+        - signal: The signal data to be plotted.
+        - time: The time axis corresponding to the signal.
+        - graphicsView: The PyQtGraph graphics view where the plot will be displayed.
+        """
         self.timer_1 = QTimer()
         self.timer_1.setInterval(45)
         self.timer_1.timeout.connect(functools.partial(self.update_plot_data_1, signal, time,graphicsView))
         self.timer_1.start()
 
-    def update_plot_data_1(self,signal,time, graphicsView):
+
+
+    def update_plot_data_1(self, signal, time, graphicsView):
+        """
+        Updates the dynamic plot data in the specified graphics view.
+
+        Parameters:
+        - signal: The signal data to be plotted.
+        - time: The time axis corresponding to the signal.
+        - graphicsView: The PyQtGraph graphics view where the plot will be displayed.
+        """
         if self.signal_added:
-            # chunk_size = len(self.original_signal) // 100  # Adjust the chunk size as needed
             chunk_size = int((len(signal) * 50 * 10 ** -3) / self.time_a[-1])
             start_indx = self.end_indx
             end_indx = min(start_indx + chunk_size, len(signal))
@@ -254,7 +300,14 @@ class MainApp(QMainWindow, FORM_CLASS):
                 graphicsView.clear()
                 graphicsView.plot(time, signal, pen='r')
 
+
     def update_plot(self, state):
+        """
+        Updates the plot based on the state of the media player.
+
+        Parameters:
+        - state: The state of the media player (playing, paused, stopped).
+        """
         signal_choosen = self.signal_choosen.currentText()
         if signal_choosen == 'Original Signal':
             signal = self.original_signal
@@ -277,6 +330,12 @@ class MainApp(QMainWindow, FORM_CLASS):
             self.end_indx = 0
 
     def slider_changed(self, slider):
+        """
+        Handles the change of sliders, updates the plot, and applies processing based on slider values.
+
+        Parameters:
+        - slider: The PyQtGraph slider that triggered the change.
+        """
         if self.signal_added:
             selected_mode = self.comboBox.currentText()
             num_sliders = self.modes_dict[selected_mode][0]
@@ -321,19 +380,41 @@ class MainApp(QMainWindow, FORM_CLASS):
 
  
     def get_sliders_values(self, num_sliders):
+        """
+        Gets the values of sliders.
+
+        Parameters:
+        - num_sliders: The number of sliders.
+
+        Returns:
+        - List of slider values.
+        """
         sliders_values = []
         for i in range(num_sliders):
             slider = getattr(self, f"verticalSlider_{i + 1}")
             sliders_values.append(slider.value())
         return sliders_values
 
+
+
     def DFT(self):
+        """
+        Computes the Discrete Fourier Transform (DFT) of the original signal.
+
+        Returns:
+        - Tuple containing processed frequencies, amplitudes, and the transformed signal.
+        """
         transformed, xf = self.m2.Fourier_Transform_Signal(self.original_signal, self.sampling_rate)
         self.graphicsView_2.plot(xf,abs(transformed), pen='r')
         
         return xf, abs(transformed), transformed
     
+
+
     def handle_abnormalities(self):
+        """
+        Handles abnormalities in ECG mode by deactivating other sliders accordingly.
+        """
         active_slidder = self.abnormalities_dict[self.file_name]
         # Deactivating the other sliders, so if thier values are changed, nothing will happen 
         for i in range(4):
@@ -345,6 +426,12 @@ class MainApp(QMainWindow, FORM_CLASS):
 
       
     def create_temp_wav_file(self):
+        """
+        Creates a temporary WAV file for the processed signal.
+
+        Returns:
+        - Path to the temporary WAV file.
+        """
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         temp_file.close()
         wav_file_path = temp_file.name
@@ -357,6 +444,9 @@ class MainApp(QMainWindow, FORM_CLASS):
 
     
     def toggle_playback(self):
+        """
+        Toggles the playback of the selected signal.
+        """
         if self.signal_added:
 
             signal_choosen = self.signal_choosen.currentText()
@@ -419,6 +509,12 @@ class MainApp(QMainWindow, FORM_CLASS):
 
   
     def update_icon(self, state):
+        """
+        Update the play/pause button icon based on the playback state.
+
+        Parameters:
+        - state: Current playback state of the media player.
+        """
         if state == QMediaPlayer.PlayingState:
             icon_path = os.path.join("imgs", "pause.png")
         elif state == QMediaPlayer.PausedState:
@@ -431,8 +527,15 @@ class MainApp(QMainWindow, FORM_CLASS):
         self.play_pause_btn.setIcon(QIcon(icon_path))
 
 
-    # A function used to zoom in and out of the graph
+   
     def zoom(self, graphicsView, zoom_factor):
+        """
+        Zoom in or out on a specified graph view.
+
+        Parameters:
+        - graphicsView: Graph view widget to zoom.
+        - zoom_factor: Scaling factor for zooming.
+        """
         # Get the current visible x and y ranges
         x_min, x_max = graphicsView.getViewBox().viewRange()[0]
         # Calculate the new visible x and y ranges (zoom)
@@ -441,15 +544,23 @@ class MainApp(QMainWindow, FORM_CLASS):
         # Set the new visible x and y ranges
         graphicsView.getViewBox().setRange(xRange=[new_x_min, new_x_max])
 
-    # A function used to zoom in the graph
+
+
     def zoom_in(self):
+        """
+        Zoom in on the graph views.
+        """
         if self.zoom_counter < 5:  # Set your desired limit
             self.zoom(self.graphicsView, 1.3)
             self.zoom(self.graphicsView_3, 1.3)
             self.zoom_counter += 1
 
-    # A function used to zoom out from the graph
+
+
     def zoom_out(self):
+        """
+        Zoom out from the graph views.
+        """
         if self.zoom_counter > -3:
             self.zoom(self.graphicsView, 0.5)
             self.zoom(self.graphicsView_3, 0.5)
@@ -457,6 +568,9 @@ class MainApp(QMainWindow, FORM_CLASS):
 
     
     def change_speed(self):
+        """
+        Change the playback speed of the media player based on the selected speed option.
+        """
         speed = self.speed_selection.currentText()
         if speed == 'x0.5':
             self.media_player.setPlaybackRate(0.5)
@@ -475,7 +589,10 @@ class MainApp(QMainWindow, FORM_CLASS):
         return freq_Hz / f_max * len(signal)
 
 
-def main():  # method to start app
+def main():
+    """
+    Entry point for the application. Creates the main window and starts the Qt application event loop.
+    """ 
     app = QApplication(sys.argv)
     window = MainApp()
     window.show()
