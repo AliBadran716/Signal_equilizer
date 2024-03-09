@@ -1,4 +1,5 @@
 # _Signal Equalizer Application_
+![Image-Equalizer](https://github.com/Muhannad159/Signal_equalizer/assets/104541242/b109b291-76dd-42b4-afed-d56d22dc79a9)
 
 _Signal Equalizer_ is a versatile desktop application designed for use in the music and speech industry, as well as various biomedical applications such as hearing aid abnormalities detection. The application allows users to open a signal and manipulate the magnitude of specific frequency components through intuitive sliders, offering a range of modes to suit different use cases.
 
@@ -57,4 +58,36 @@ The UI is designed for ease of use and consistency across modes. Users can switc
 5. _Visualize Results:_
    - Use cine viewers and spectrograms to observe changes in the input and output signals.
 
----link for a demo video (https://drive.google.com/drive/folders/1-pJB7SgPCCS79RwT-XjIF0x1n3uQhOBO?usp=drive_link )
+### link for a demo video 
+(https://drive.google.com/drive/folders/1-pJB7SgPCCS79RwT-XjIF0x1n3uQhOBO?usp=drive_link)
+
+## Contributors <a name = "Contributors"></a>
+
+<table>
+  <tr>
+    <td align="center">
+    <a href="https://github.com/Muhannad159" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/104541242?v=4" width="150px;" alt="Muhannad Abdallah"/>
+    <br />
+    <sub><b>Muhannad Abdallah</b></sub></a>
+    </td>
+  <td align="center">
+    <a href="https://github.com/AliBadran716" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/102072821?v=4" width="150px;" alt="Ali Badran"/>
+    <br />
+    <sub><b>Ali Badran</b></sub></a>
+    </td>
+     <td align="center">
+    <a href="https://github.com/ahmedalii3" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/110257687?v=4" width="150px;" alt="Ahmed Ali"/>
+    <br />
+    <sub><b>Ahmed Ali</b></sub></a>
+    </td>
+<td align="center">
+    <a href="https://github.com/hassanowis" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/102428122?v=4" width="150px;" alt="Hassan Hussein"/>
+    <br />
+    <sub><b>Hassan Hussein</b></sub></a>
+    </td>
+      </tr>
+ </table>
